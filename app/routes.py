@@ -72,6 +72,7 @@ def map():
         timezone = row['timezone']
         ranking = row['ranking']
         zips = row['zips']
+        zip_codes = zips.split()
         id = row['id']
 
         folium.Marker([float(latitude), float(longitude)],
@@ -92,7 +93,7 @@ def map():
                         <li>Incorporated: {incorporated}</li>
                         <li>Timezone: {timezone}</li>
                         <li>Ranking: {ranking}</li>
-                        <li>Zip Codes: {zips}</li>
+                        <li>Zip Codes: {zip_codes[0]} - {zip_codes[-1]}</li>
                         <li>ID: {id}</li>
                     </u>    
                     ''',
