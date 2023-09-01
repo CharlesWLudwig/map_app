@@ -1,0 +1,7 @@
+flask
+folium
+numpy
+pandas
+requests
+json
+psycopg2
