@@ -10,3 +10,10 @@ nav {
 img {
     width: 100%;
 }
+
+.overlayButtons {
+    display: flex; 
+    flex-direction: row; 
+    justify-content: space-evenly; 
+    align-items: center;
+}

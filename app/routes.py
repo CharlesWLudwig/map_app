@@ -1,9 +1,9 @@
-from flask import render_template
+from flask import render_template, request
 from app import app 
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
-def index():
+def index():        
     return render_template("index.html")
 
 @app.route('/map', methods=['GET', 'POST'])
@@ -12,7 +12,7 @@ def map():
     import pandas as pd
     import requests
     import json
-
+    
     tooltip = 'Click For More Info'
 
     # GeoCoding User Location
@@ -51,7 +51,7 @@ def map():
     df = pd.read_csv("app/datasets/uscities.csv")
 
     # Preceptron
-    df = df.head(600)
+    df = df.head(60)
 
     print(df.head(2))
 
