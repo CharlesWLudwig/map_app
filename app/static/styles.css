@@ -1,0 +1,12 @@
+.error {
+    color: red;
+}
+
+nav {
+	position: fixed;
+	top: 0;
+}
+
+img {
+    width: 100%;
+}
