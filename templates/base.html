@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapPy</title>
+
+    <link rel="stylesheet" href="../static/styles.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css" integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous">      
+
+    <script src="https://api.mqcdn.com/sdk/place-search-js/v1.0.0/place-search.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://api.mqcdn.com/sdk/place-search-js/v1.0.0/place-search.css"/>
+
+    <script>
+        let id;
+        let target;
+        let options;
+
+        function success(pos) {
+        const crd = pos.coords;
+
+        if (target.latitude === crd.latitude && target.longitude === crd.longitude) {
+            console.log("Congratulations, you reached the target");
+            navigator.geolocation.clearWatch(id);
+        }
+        }
+
+        function error(err) {
+        console.error(`ERROR(${err.code}): ${err.message}`);
+        }
+
+        target = {
+        latitude: 0,
+        longitude: 0,
+        };
+
+        options = {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 0,
+        };
+
+        const watchID = navigator.geolocation.watchPosition((position) => {
+            console.log(position.coords.latitude, position.coords.longitude);
+
+            document.getElementById("user_latitude").value = position.coords.latitude
+            ;
+            document.getElementById("user_longitude").value = position.coords.longitude;
+        });
+    </script>  
+</head>
+<body style="overflow:hidden;">
+    <div style="display: flex; justify-content: space-between;">
+        <form action="{{ url_for("index")}}" method="post" id="latlongform">
+            <label for="user_latitude">Latitude:</label>
+            <input type="text" id="user_latitude" name="browser_latitude" 
+            required
+            placeholder="Please wait..." value="{{ user_latitude }}">
+            <label for="user_longitude">Longitude:</label>
+            <input type="text" id="user_longitude" name="browser_longitude" placeholder="Please wait..." 
+            required 
+            value="{{ user_longitude }}">
+            <button type="submit" id="submit">Share Your Current Location</button>
+        </form>
+        <br>
+    </div>
+        {% block content %}{% endblock %}
+</body>
+</html>

@@ -5,3 +5,12 @@ pandas
 requests
 psycopg2
 Gunicorn
+geojson
+shapely
+django
+binutils
+libproj-dev
+gdal-bin 
+libgdal-dev
+python3-gdal
+docker
