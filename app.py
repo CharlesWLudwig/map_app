@@ -43,6 +43,8 @@ def creatingFoliumMap(browser_latitude, browser_longitude):
     return reply, points
 
 def getBrowserLocation(browser_latitude, browser_longitude):
+    geocode_data_info = [] 
+
     mapquest_api = os.getenv('MAPQUEST_API')
 
     # Reverse geocode browser longitude and latitude to an address
@@ -58,8 +60,6 @@ def getBrowserLocation(browser_latitude, browser_longitude):
         for i in geocode_data['results']:
             geocode_data_list.append(i)
    
-        geocode_data_info = [] 
-
         for i in geocode_data_list[0]['locations']:
             geocode_data_info.append(i)
 
