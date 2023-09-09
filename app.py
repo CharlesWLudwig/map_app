@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask_sqlalchemy import SQLAlchemy
 from shapely.geometry import Point as Shapely_point, mapping
 from geojson import Point as Geoj_point, Polygon as Geoj_polygon, Feature, FeatureCollection
 import folium
-import os 
 from folium import plugins
 import pandas as pd
 import numpy as np
-import re
+import re, os
 from pprint import pprint
 import random
 import requests
@@ -16,6 +16,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'your secret key'
+app.config['JSON_SORT_KEYS'] = False
 
 def creatingFoliumMap(browser_latitude, browser_longitude):   
     params = {'point': f'{browser_latitude},{browser_longitude}',  
@@ -113,6 +114,7 @@ def getCurrentWeather(browser_latitude, browser_longitude):
     
     return reply
 
+"""
 def getForecastWeather(browser_latitude, browser_longitude):
     # Forecasting
     forecast_url = f"https://api.tomtom.com/weatherforecast/v1/hourly?lat={browser_latitude}&lon={browser_longitude}&forecastHours=24&key={os.getenv('TOMTOM_API_KEY')}"
@@ -125,12 +127,132 @@ def getForecastWeather(browser_latitude, browser_longitude):
     print(forecast_data)
 
     return forecast_data
+"""
 
-@app.route('/', methods =["GET", "POST"])
-def index():
+def convert_latlon_geojson(browser_latitude, browser_longitude):
+    buffer_geocircle_distance = 1.0
+    
+    error_response = {}
+
+    #is lon valid and numeric or not
+    try:
+        browser_longitude = float(browser_longitude)
+    except ValueError:
+        error_response['longitude error'] = 'longitude argument should be numeric'
+        error_response['value given'] = browser_longitude
+        return jsonify(error_response)
+
+    # is lon in or out of range
+    if browser_longitude < -180.0 or browser_longitude > 180.0:
+        error_response['longitude error'] = 'longitude argument value out of range'
+        error_response['value given'] = browser_longitude
+        return jsonify(error_response)
+
+    #is lat valid and numeric or not
+    try:
+        browser_latitude = float(browser_latitude)
+    except ValueError:
+        error_response['latitude error'] = 'latitude argument should be numeric'
+        error_response['value given'] = browser_latitude
+        return jsonify(error_response)
+
+    # is lat in or out of range
+    if browser_latitude < -90.0 or browser_latitude > 90.0:
+        error_response['latitude error'] = 'latitude argument value out of range'
+        error_response['value given'] = browser_latitude
+        return jsonify(error_response)
+
+    # check to see if buffer_geocircle_distance argument is numeric and valid
+    try:
+        buffer_geocircle_distance = float(buffer_geocircle_distance)
+    except ValueError:
+        error_response['buffer distance error'] = 'buffer_geocircle_distance argument should be numeric'
+        error_response['value given'] = buffer_geocircle_distance
+        return jsonify(error_response)
+
+    # is lat in or out of range
+    if buffer_geocircle_distance < -0.001 or buffer_geocircle_distance > 100:
+        error_response['buffer distance error'] = 'buffer_geocircle_distance argument value out of range'
+        error_response['value given'] = buffer_geocircle_distance
+        return jsonify(error_response)
+
+    # Choose a shapely point
+    shapely_point = Shapely_point(browser_longitude, browser_latitude)
+    
+    # use SHapely buffer function to create Shapely point to create a buffer polygon
+    shapely_point_buffer = shapely_point.buffer(buffer_geocircle_distance / 111)
+    #use Shapely mapping function to create a dictionary from polygon object [type, coordinate]
+    shapely_point_buff_dict = mapping(shapely_point_buffer)
+    # get the coordinates from the dictionary
+    shapely_point_buff_coords = shapely_point_buff_dict['coordinates']
+
+    # use the geojson library to create two features (a point and its buffer)
+    point_feature = Feature(geometry=Geoj_point((browser_longitude, browser_latitude)))
+
+    point_feature['properties']['name'] = 'API Point'
+    point_feature['properties']['marker-color'] = 'red'
+
+    # buffer polygon, colored blue 
+    poly_feature = Feature(geometry=Geoj_polygon(shapely_point_buff_coords))
+    poly_feature['properties']['name'] = "API point buffer"
+    poly_feature['properties']['stroke'] = 'blue'
+    poly_feature['properties']['fill'] = 'blue'
+    poly_feature['properties']['fill-capacity'] = 0.3
+
+    # create a feature collection with polgyon and point
+    feature_col_res = FeatureCollection([point_feature, poly_feature])
+
+    # return jsonify(feature_col_res)
+    # json_endpoint = jsonify(feature_col_res)
+    json_endpoint = json.dumps(feature_col_res)
+
+    return json_endpoint
+
+@app.route('/')
+def index_get():
+    # Starting Map of User Location
+    map = folium.Map(location=[0, 0], tiles='Stamen Terrain', zoom_start=12)
+
+    # Plotting data from dataframes
+    data = pd.DataFrame({
+        'lon':[-58, 2, 145, 30.32, -4.03, -73.57, 36.82, -38.5],
+        'lat':[-34, 49, -38, 59.93, 5.33, 45.52, -1.29, -12.97],
+        'name':['Buenos Aires', 'Paris', 'melbourne', 'St Petersbourg', 'Abidjan', 'Montreal', 'Nairobi', 'Salvador'],
+        'value':[10, 12, 40, 70, 23, 43, 100, 43]
+    }, dtype=str)
+
+    for i in range(0,len(data)):
+        folium.Marker(
+            location=[data.iloc[i]['lat'], data.iloc[i]['lon']],
+            popup=data.iloc[i]['name'],
+        ).add_to(map)
+        
+    return render_template("index.html", map = map)   
+
+@app.route('/', methods = ["POST"])
+def index_post():
     if request.method == "POST":
        browser_latitude = request.form.get("browser_latitude")
        browser_longitude = request.form.get("browser_longitude")
+
+       # Starting Map of User Location
+       map = folium.Map(location=[browser_latitude, browser_longitude], tiles='Stamen Terrain', zoom_start=12)
+
+       geojson_data = convert_latlon_geojson(browser_latitude=browser_latitude, 
+       browser_longitude=browser_longitude)
+
+       folium.GeoJson(geojson_data, name="geojson").add_to(map)
+
+       folium.LayerControl().add_to(map)
+
+       json_df = pd.read_json(geojson_data)   
+       json_result = json_df.to_json(orient='records')
+       parsed = json.loads(json_result)
+       json_out = json.dumps(parsed, indent=4)
+
+       # Send to PostGres Database
+#       with open('json_out.json', 'w') as outfile:
+#            outfile.write(json_out)
 
        geocode_data = getBrowserLocation(browser_latitude=browser_latitude, 
        browser_longitude=browser_longitude)
@@ -163,10 +285,6 @@ def index():
            print(e)
 
        """
-
-       # Starting Map of User Location
-       map = folium.Map(location=[browser_latitude, browser_longitude], tiles='Stamen Terrain', zoom_start=12)
-
        folium.Marker(
             [browser_latitude, browser_longitude], popup="<i>Home Location</i>", 
         ).add_to(map)
@@ -192,11 +310,9 @@ def index():
             
        current_weather = getCurrentWeather(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
 
-       forecast_weather = getForecastWeather(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
+       return render_template("index.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, geocode_data = geocode_data, current_weather = current_weather, geojson_data = geojson_data, json_result = json_result)   
 
-       return render_template("index.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, geocode_data = geocode_data, current_weather = current_weather, forecast_weather = forecast_weather)   
+    return redirect(url_for('index_get')) 
 
-    return render_template("index.html")
-
-if __name__=='__main__':
+if __name__ == '__main__':
    app.run(debug=True)

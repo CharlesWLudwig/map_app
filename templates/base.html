@@ -6,9 +6,6 @@
     <title>MapPy</title>
 
     <link rel="stylesheet" href="../static/styles.css">
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css" integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous">      
-
     <script src="https://api.mqcdn.com/sdk/place-search-js/v1.0.0/place-search.js"></script>
     <link type="text/css" rel="stylesheet" href="https://api.mqcdn.com/sdk/place-search-js/v1.0.0/place-search.css"/>
 
@@ -52,19 +49,28 @@
 </head>
 <body style="overflow:hidden;">
     <div style="display: flex; justify-content: space-between;">
-        <form action="{{ url_for("index")}}" method="post" id="latlongform">
+        <form action="{{ url_for("index_post")}}" method="post" id="latlongform">
             <label for="user_latitude">Latitude:</label>
-            <input type="text" id="user_latitude" name="browser_latitude" 
+            <input type="text" 
+            id="user_latitude" 
+            name="browser_latitude" 
+            placeholder="Please wait..." 
             required
-            placeholder="Please wait..." value="{{ user_latitude }}">
-            <label for="user_longitude">Longitude:</label>
-            <input type="text" id="user_longitude" name="browser_longitude" placeholder="Please wait..." 
+            value="{{ user_latitude }}">
+
+            <label for="user_longitude">Longitude:
+            </label>
+            <input type="text" 
+            id="user_longitude" 
+            name="browser_longitude" 
+            placeholder="Please wait..." 
             required 
             value="{{ user_longitude }}">
+            <br>          
             <button type="submit" id="submit">Share Your Current Location</button>
         </form>
         <br>
     </div>
-        {% block content %}{% endblock %}
-</body>
+    {% block content %}{% endblock %}
+  </body>
 </html>

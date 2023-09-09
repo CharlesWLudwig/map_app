@@ -7,10 +7,24 @@
             {{ df.to_html() | safe }}
         {% endif %}    
         <br>
-        {{ reply }}
+        {% if reply %}
+            {{ reply }}
+        {% endif %}
         <br>
-        {{ current_weather }}
+        {% if current_weather %}
+            {{ current_weather }}
+        {% endif %}
         <br>
+        
+        <!--
+        {% if geojson_data %}
+            {{ geojson_data }}
+        {% endif %}
+        <br>
+            {% if json_result %}
+                {{ json_result }}
+            {% endif %}
+        -->
         <!-- {{ forecast_weather }} -->
         </div>
     <div style="float: right; right: 0; width: 50%">
