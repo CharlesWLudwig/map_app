@@ -17,6 +17,8 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'your secret key'
 app.config['JSON_SORT_KEYS'] = False
+app.config["DEBUG"] = True
+app.config["APPLICATION_ROOT"] = "/"
 
 def creatingFoliumMap(browser_latitude, browser_longitude):  
     reply = {} 
@@ -214,8 +216,10 @@ def convert_latlon_geojson(browser_latitude, browser_longitude):
 
 @app.route('/')
 def index_get():
+    browser_latitude = request.args.get("browser_latitude")
+    browser_longitude = request.args.get("browser_longitude")
     # Starting Map of User Location
-    map = folium.Map(location=[0, 0], tiles='Stamen Terrain', zoom_start=12)
+    map = folium.Map(location=[browser_latitude, browser_longitude], tiles='Stamen Terrain', zoom_start=12)
 
     # Plotting data from dataframes
     data = pd.DataFrame({
@@ -232,6 +236,13 @@ def index_get():
         ).add_to(map)
         
     return render_template("index.html", map = map)   
+
+def recreationActivities(browser_latitude, browser_longitude):
+    """
+    Recreation Information Database (RIDB)
+    """
+    api_key = os.getenv("OUTDOORS_API_KEY")
+    pass
 
 @app.route('/', methods = ["POST"])
 def index_post():
@@ -298,6 +309,7 @@ def index_post():
        
        folium.PolyLine(points, color='green', weight=10).add_to(map)
 
+       outdoor_activities = recreationActivities(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
        # Plotting data from dataframes
        data = pd.DataFrame({
             'lon':[-58, 2, 145, 30.32, -4.03, -73.57, 36.82, -38.5],

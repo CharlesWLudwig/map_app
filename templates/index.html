@@ -34,13 +34,14 @@
     <div style="float: right; right: 0; width: 50%">
         {% if map %}
         <div class="cards">
-            <div class="card" style="width: 50vw">{{ map._repr_html_() | safe }}</div>
+            <div class="card" style="width: 50vw; height: 500px">{{ map._repr_html_() | safe }}
+            </div>
         </div>
         {% endif %}
     </div>
 </div>
 <!---->
-<section style="width: 100%; display: flex; justify-content: space-between; bottom: 0">
+<div style="width: 100%; display: flex; justify-content: space-between; bottom: 0;">
     <div style="width: 20%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
     </div>
     <div style="width: 20%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
@@ -51,5 +52,5 @@
     </div>
     <div style="width: 20%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
     </div>
-</section>
+</div>
 {% endblock %}
