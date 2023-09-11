@@ -8,14 +8,18 @@
         {% endif %}    
         <br>
         {% if reply %}
-            {{ reply }}
+        <div class="cards">
+            {% for key, value in reply.items() %}
+                <div class="card">{{ key }}: {{ value}}</div>
+            {% endfor %}
         {% endif %}
-        <br>
         {% if current_weather %}
-            {{ current_weather }}
+            {% for key, value in current_weather.items() %}
+                <div class="card">{{ key }}: {{ value}}</div>
+            {% endfor %}
         {% endif %}
         <br>
-        
+        </div>        
         <!--
         {% if geojson_data %}
             {{ geojson_data }}
@@ -29,7 +33,9 @@
         </div>
     <div style="float: right; right: 0; width: 50%">
         {% if map %}
-            {{ map._repr_html_() | safe }}
+        <div class="cards">
+            <div class="card" style="width: 50vw">{{ map._repr_html_() | safe }}</div>
+        </div>
         {% endif %}
     </div>
 </div>

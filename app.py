@@ -18,7 +18,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your secret key'
 app.config['JSON_SORT_KEYS'] = False
 
-def creatingFoliumMap(browser_latitude, browser_longitude):   
+def creatingFoliumMap(browser_latitude, browser_longitude):  
+    reply = {} 
+
     params = {'point': f'{browser_latitude},{browser_longitude}',  
             'unit': 'mph', 'thickness': 14, 
             'key': os.getenv('TOMTOM_API_KEY')}
@@ -33,13 +35,11 @@ def creatingFoliumMap(browser_latitude, browser_longitude):
                 'FRC4': 'Local connecting road', 'FRC5': 'Local road of high importance', 'FRC6': 'Local road'}
 
     if data['flowSegmentData']['roadClosure']:
-        reply = 'Unfortunately this road is closed!'
+        reply['road_closure'] = 'The road is closed!'
     else:
-        reply = (f"Your nearest road is classified as a {road_types[data['flowSegmentData']['frc']]}.  "
-                f"The current average speed is {data['flowSegmentData']['currentSpeed']} mph and "
-                f"would take {data['flowSegmentData']['currentTravelTime']} seconds to pass this section of road.  "
-                f"With no traffic, the speed would be {data['flowSegmentData']['freeFlowSpeed']} mph and would "
-                f"take {data['flowSegmentData']['freeFlowTravelTime']} seconds.")
+        reply['road_type'] = road_types[data['flowSegmentData']['frc']]
+        reply['road_speed'] = f"{data['flowSegmentData']['currentSpeed']} mph"
+        reply['road_speed_time'] = f"{data['flowSegmentData']['currentTravelTime']} seconds to pass"
 
     points = [(i['latitude'], i['longitude']) for i in data['flowSegmentData']['coordinates']['coordinate']]
     
@@ -100,6 +100,8 @@ def getBrowserLocation(browser_latitude, browser_longitude):
 def getCurrentWeather(browser_latitude, browser_longitude):
     mapquest_api = os.getenv('OPENWEATHER_API')
 
+    reply = {}
+
     # Reverse geocode browser longitude and latitude to an address
     weather_url = f'https://api.openweathermap.org/data/2.5/weather?lat={browser_latitude}&lon={browser_longitude}&units=imperial&appid={mapquest_api}'
 
@@ -108,10 +110,12 @@ def getCurrentWeather(browser_latitude, browser_longitude):
     if weather_data.status_code == 200:
         weather_data = weather_data.json()
 
-    reply = (f"It's a {weather_data['weather'][0]['description']} today."
-             f"\nThe temperature is {weather_data['main']['temp']}, and it feels like {weather_data['main']['feels_like']}."
-             f"\nThe sunrise will occur at {weather_data['sys']['sunrise']} and the sunset will occur at {weather_data['sys']['sunset']}")
-    
+    reply['description'] = weather_data['weather'][0]['description']
+    reply['temperature'] = weather_data['main']['temp'] 
+    reply['feeling'] =weather_data['main']['feels_like']
+    reply['sunrise_time'] = weather_data['sys']['sunrise']
+    reply['sunset_time'] = weather_data['sys']['sunset']
+
     return reply
 
 """
