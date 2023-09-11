@@ -231,7 +231,7 @@ def index_get():
 
 @app.route('/', methods = ["POST"])
 def index_post():
-    if request.method == "POST":
+    if request.method == "POST":      
        browser_latitude = request.form.get("browser_latitude")
        browser_longitude = request.form.get("browser_longitude")
 
@@ -313,6 +313,28 @@ def index_post():
        return render_template("index.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, geocode_data = geocode_data, current_weather = current_weather, geojson_data = geojson_data, json_result = json_result)   
 
     return redirect(url_for('index_get')) 
+
+"""
+@app.route("/api/country", methods=["GET"])
+def get_all_countries():
+    if connection_records:
+        result = []      
+        for record in connection_records:
+            print(record)
+
+        return jsonify(connection_records)
+    
+        for record in connection_records:
+            print(record)
+            result.append({
+                'country': record[0],
+                'latitude': record[1],
+                'longitude': record[2],
+                'name': record[3]})        
+        return jsonify(result)
+    else:
+        return jsonify({"error": f"country not found."}), 404       
+"""
 
 if __name__ == '__main__':
    app.run(debug=True)
