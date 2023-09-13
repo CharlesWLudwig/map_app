@@ -12,3 +12,4 @@ flask-forms
 flask-login
 flask-sqlalchemy
 flask-migrate
+email-validator
