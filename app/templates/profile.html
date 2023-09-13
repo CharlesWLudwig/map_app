@@ -1,6 +1,70 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+<h1>Hi, {{ user }}!</h1>
+
+<script>
+    let id;
+    let target;
+    let options;
+
+    function success(pos) {
+    const crd = pos.coords;
+
+    if (target.latitude === crd.latitude && target.longitude === crd.longitude) {
+        console.log("Congratulations, you reached the target");
+        navigator.geolocation.clearWatch(id);
+    }
+    }
+
+    function error(err) {
+    console.error(`ERROR(${err.code}): ${err.message}`);
+    }
+
+    target = {
+    latitude: 0,
+    longitude: 0,
+    };
+
+    options = {
+    enableHighAccuracy: false,
+    timeout: 5000,
+    maximumAge: 0,
+    };
+
+    const watchID = navigator.geolocation.watchPosition((position) => {
+        console.log(position.coords.latitude, position.coords.longitude);
+
+        document.getElementById("user_latitude").value = position.coords.latitude
+        ;
+        document.getElementById("user_longitude").value = position.coords.longitude;
+    });
+</script>  
+
+<div style="display: flex; justify-content: space-between;">
+    <form action="{{ url_for("profile_post")}}" method="post" id="latlongform">
+        <label for="user_latitude">Latitude:</label>
+        <input type="text" 
+        id="user_latitude" 
+        name="browser_latitude" 
+        placeholder="Please wait..." 
+        required
+        value="{{ user_latitude }}">
+
+        <label for="user_longitude">Longitude:
+        </label>
+        <input type="text" 
+        id="user_longitude" 
+        name="browser_longitude" 
+        placeholder="Please wait..." 
+        required 
+        value="{{ user_longitude }}">        
+        <button type="submit" id="submit">Share Your Current Location</button>
+    </form>
+    <br>
+</div>
+
 <div style="width: 100vw; display: block">
     <div style="float: left; left: 0; width: 50%;">
         {% if df %}

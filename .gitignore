@@ -7,8 +7,10 @@ __pycache__/
 *.so
 trash
 database.ini
+migrations/
 # Distribution / packaging
 .Python
+rec.py
 build/
 develop-eggs/
 dist/
@@ -153,9 +155,8 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-forms.py
 database.py
-templates/input.html
+app/templates/input.html
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore

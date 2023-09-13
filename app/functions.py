@@ -6,19 +6,10 @@ import folium
 from folium import plugins
 import pandas as pd
 import numpy as np
-import re, os
-from pprint import pprint
+import os
 import random
 import requests
 import json
-from datetime import datetime
-
-app = Flask(__name__)
-
-app.config['SECRET_KEY'] = 'your secret key'
-app.config['JSON_SORT_KEYS'] = False
-app.config["DEBUG"] = True
-app.config["APPLICATION_ROOT"] = "/"
 
 def creatingFoliumMap(browser_latitude, browser_longitude):  
     reply = {} 
@@ -67,36 +58,46 @@ def getBrowserLocation(browser_latitude, browser_longitude):
    
         for i in geocode_data_list[0]['locations']:
             geocode_data_info.append(i)
-
-        """
-        adminArea1 = geocode_data_info[00]['adminArea1']
+        
+        adminArea1 = geocode_data_info[0]['adminArea1']
         adminArea3 = geocode_data_info[0]['adminArea3']
-        adminArea4 = geocode_data_info[0]['adminArea4']
-        adminArea5 = geocode_data_info[0]['adminArea5']
-        adminArea6 = geocode_data_info[0]['adminArea6']
         postalcode = geocode_data_info[0]['postalCode']
+        """
         browserLat = geocode_data_info[0]['displayLatLng']['lat']
         browserLng = geocode_data_info[0]['displayLatLng']['lng']
         roadMetadata = geocode_data_info[0]['roadMetadata']
         roadSpeedLimit = geocode_data_info[0]['roadMetadata']['speedLimit']
         roadSpeedLimitUnits = geocode_data_info[0]['roadMetadata']['speedLimitUnits']
         tollRoad = geocode_data_info[0]['roadMetadata']['tollRoad']
-
-        geocode_data_info = [
-            adminArea1, 
-            adminArea3, 
-            adminArea4, 
-            adminArea5, 
-            adminArea6,
-            postalcode,
-            browserLat,
-            browserLng,
-            roadMetadata,
-            roadSpeedLimit,
-            roadSpeedLimitUnits,
-            tollRoad
-        ]
         """
+        geocode_data_pop = {
+            "country": adminArea1, 
+            "state": adminArea3, 
+            "postal_code": postalcode,
+        }
+
+        print(geocode_data_pop)
+
+        webcams_api_key = os.getenv("WEBCAMS_API_KEY")
+
+        webcams_api_host = os.getenv("WEBCAMS_API_HOST")
+        
+        url = f"https://webcamstravel.p.rapidapi.com/webcams/list/nearby=%7{browser_latitude}%7D,%7{browser_longitude}%7D,%7Bradius%7D"
+
+        params = {
+            "show":"webcams:image,location",
+            "lang":"en"
+        }
+
+        headers = {
+            "X-RapidAPI-Key": webcams_api_key,
+            "X-RapidAPI-Host": webcams_api_host
+        }
+
+        response = requests.get(url, headers=headers, params=params)
+
+        print(response.json())
+
     return geocode_data_info
 
 def getCurrentWeather(browser_latitude, browser_longitude):
@@ -119,21 +120,6 @@ def getCurrentWeather(browser_latitude, browser_longitude):
     reply['sunset_time'] = weather_data['sys']['sunset']
 
     return reply
-
-"""
-def getForecastWeather(browser_latitude, browser_longitude):
-    # Forecasting
-    forecast_url = f"https://api.tomtom.com/weatherforecast/v1/hourly?lat={browser_latitude}&lon={browser_longitude}&forecastHours=24&key={os.getenv('TOMTOM_API_KEY')}"
-
-    forecast_data = requests.get(forecast_url)
-
-    if forecast_data.status_code == 200:
-        forecast_data = forecast_data.json()
-
-    print(forecast_data)
-
-    return forecast_data
-"""
 
 def convert_latlon_geojson(browser_latitude, browser_longitude):
     buffer_geocircle_distance = 1.0
@@ -213,144 +199,3 @@ def convert_latlon_geojson(browser_latitude, browser_longitude):
     json_endpoint = json.dumps(feature_col_res)
 
     return json_endpoint
-
-@app.route('/')
-def index_get():
-    browser_latitude = request.args.get("browser_latitude")
-    browser_longitude = request.args.get("browser_longitude")
-    # Starting Map of User Location
-    map = folium.Map(location=[browser_latitude, browser_longitude], tiles='Stamen Terrain', zoom_start=12)
-
-    # Plotting data from dataframes
-    data = pd.DataFrame({
-        'lon':[-58, 2, 145, 30.32, -4.03, -73.57, 36.82, -38.5],
-        'lat':[-34, 49, -38, 59.93, 5.33, 45.52, -1.29, -12.97],
-        'name':['Buenos Aires', 'Paris', 'melbourne', 'St Petersbourg', 'Abidjan', 'Montreal', 'Nairobi', 'Salvador'],
-        'value':[10, 12, 40, 70, 23, 43, 100, 43]
-    }, dtype=str)
-
-    for i in range(0,len(data)):
-        folium.Marker(
-            location=[data.iloc[i]['lat'], data.iloc[i]['lon']],
-            popup=data.iloc[i]['name'],
-        ).add_to(map)
-        
-    return render_template("index.html", map = map)   
-
-def recreationActivities(browser_latitude, browser_longitude):
-    """
-    Recreation Information Database (RIDB)
-    """
-    api_key = os.getenv("OUTDOORS_API_KEY")
-    pass
-
-@app.route('/', methods = ["POST"])
-def index_post():
-    if request.method == "POST":      
-       browser_latitude = request.form.get("browser_latitude")
-       browser_longitude = request.form.get("browser_longitude")
-
-       # Starting Map of User Location
-       map = folium.Map(location=[browser_latitude, browser_longitude], tiles='Stamen Terrain', zoom_start=12)
-
-       geojson_data = convert_latlon_geojson(browser_latitude=browser_latitude, 
-       browser_longitude=browser_longitude)
-
-       folium.GeoJson(geojson_data, name="geojson").add_to(map)
-
-       folium.LayerControl().add_to(map)
-
-       json_df = pd.read_json(geojson_data)   
-       json_result = json_df.to_json(orient='records')
-       parsed = json.loads(json_result)
-       json_out = json.dumps(parsed, indent=4)
-
-       # Send to PostGres Database
-#       with open('json_out.json', 'w') as outfile:
-#            outfile.write(json_out)
-
-       geocode_data = getBrowserLocation(browser_latitude=browser_latitude, 
-       browser_longitude=browser_longitude)
-             
-       df = pd.DataFrame(geocode_data)
-
-       # print(df)
-       """
-       try: 
-            ###############################
-            df = df[[
-                'street',
-                'adminArea5',
-                'adminArea4',
-                'adminArea3',
-                'adminArea1',
-                'postalCode',
-                ]].copy()
-            
-            df.rename(columns={
-                'street': 'Street', 
-                'adminArea5': 'City',
-                'adminArea4': 'County',
-                'adminArea3': 'State',
-                'adminArea1': 'Country',
-                'postalCode': 'Zip Code'
-                }, inplace=True)
-                ###############################
-       except Exception as e:
-           print(e)
-
-       """
-       folium.Marker(
-            [browser_latitude, browser_longitude], popup="<i>Home Location</i>", 
-        ).add_to(map)
-       
-       # Starting to add road conditions
-       reply, points = creatingFoliumMap(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
-       
-       folium.PolyLine(points, color='green', weight=10).add_to(map)
-
-       outdoor_activities = recreationActivities(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
-       # Plotting data from dataframes
-       data = pd.DataFrame({
-            'lon':[-58, 2, 145, 30.32, -4.03, -73.57, 36.82, -38.5],
-            'lat':[-34, 49, -38, 59.93, 5.33, 45.52, -1.29, -12.97],
-            'name':['Buenos Aires', 'Paris', 'melbourne', 'St Petersbourg', 'Abidjan', 'Montreal', 'Nairobi', 'Salvador'],
-            'value':[10, 12, 40, 70, 23, 43, 100, 43]
-        }, dtype=str)
-
-       for i in range(0,len(data)):
-            folium.Marker(
-                location=[data.iloc[i]['lat'], data.iloc[i]['lon']],
-                popup=data.iloc[i]['name'],
-            ).add_to(map)
-            
-       current_weather = getCurrentWeather(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
-
-       return render_template("index.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, geocode_data = geocode_data, current_weather = current_weather, geojson_data = geojson_data, json_result = json_result)   
-
-    return redirect(url_for('index_get')) 
-
-"""
-@app.route("/api/country", methods=["GET"])
-def get_all_countries():
-    if connection_records:
-        result = []      
-        for record in connection_records:
-            print(record)
-
-        return jsonify(connection_records)
-    
-        for record in connection_records:
-            print(record)
-            result.append({
-                'country': record[0],
-                'latitude': record[1],
-                'longitude': record[2],
-                'name': record[3]})        
-        return jsonify(result)
-    else:
-        return jsonify({"error": f"country not found."}), 404       
-"""
-
-if __name__ == '__main__':
-   app.run(debug=True)
