@@ -51,12 +51,30 @@ def register():
         return redirect(url_for('index'))
     form = RegistrationForm()
     if form.validate_on_submit():
+        prospective_user = User(username=form.username.data, email=form.email.data)
+
+        user = User.query.filter_by(username=prospective_user.username).first()
+
+        email = User.query.filter_by(email=prospective_user.email).first()
+
+        if user is not None:
+            flash('Please use a different username.')
+            return redirect(url_for('register'))
+        
+        if email is not None:
+            flash('Please use a different email.')
+            return redirect(url_for('register'))
+        
         user = User(username=form.username.data, email=form.email.data)
+
         user.set_password(form.password.data)
+
         db.session.add(user)
         db.session.commit()
+        
         flash('Thank you for registering!')
         return redirect(url_for('login'))
+    
     return render_template('register.html', title='Register', form=form)
 
 @app.route('/profile', methods=["GET"])
