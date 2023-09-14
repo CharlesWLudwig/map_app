@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-<h1>Hi, {{ user }}!</h1>
-
 <script>
     let id;
     let target;
@@ -36,9 +33,13 @@
     const watchID = navigator.geolocation.watchPosition((position) => {
         console.log(position.coords.latitude, position.coords.longitude);
 
-        document.getElementById("user_latitude").value = position.coords.latitude
-        ;
+        document.getElementById("user_latitude").value = position.coords.latitude;
+
         document.getElementById("user_longitude").value = position.coords.longitude;
+
+        document.getElementById("target_latitude").value = target.latitude;
+
+        document.getElementById("target_longitude").value = target.longitude;
     });
 </script>  
 
