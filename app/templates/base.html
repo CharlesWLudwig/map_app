@@ -25,7 +25,7 @@
     <div>
         {% if current_user %}
             {{ current_user.username }} |
-        <a href="{{ url_for('landingpage') }}">Home</a>
+        <a href="{{ url_for('index') }}">Home</a>
             {% if current_user.is_anonymous %}
                 <a href="{{ url_for('login') }}">Login</a>
             {% else %}

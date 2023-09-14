@@ -14,18 +14,22 @@ from .models import User
 from .functions import creatingFoliumMap, getBrowserLocation, getCurrentWeather, convert_latlon_geojson
 from app import app, db
 
-@app.route('/')
-@app.route('/index')
+@app.route('/home')
 @login_required
-def index():
+def home():
     posts = []
 
     return render_template('profile.html', title='Home', posts=posts)
 
+@app.route('/')
+@app.route('/index')
+def index():
+    return render_template('landingpage.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('profile'))
+        return redirect(url_for('profile_get'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
@@ -35,23 +39,19 @@ def login():
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('profile')
+            next_page = url_for('profile_get')
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
-
-@app.route('/landingpage')
-def landingpage():
-    return render_template('landingpage.html')
 
 @app.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('home'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('home'))
     form = RegistrationForm()
     if form.validate_on_submit():
         prospective_user = User(username=form.username.data, email=form.email.data)
@@ -190,7 +190,7 @@ def profile_post():
 
        return render_template("profile.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, geocode_data = geocode_data, current_weather = current_weather, geojson_data = geojson_data, json_result = json_result, user=user)   
 
-    return redirect(url_for('profile')) 
+    return redirect(url_for('profile_get')) 
 
 """
 @app.route("/api/country", methods=["GET"])

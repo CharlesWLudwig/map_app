@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Sign In</h1>
-    <form action="" method="POST" novalidate>
+    <div class="accountform">
+        <h1>Sign In</h1>
+        <form action="" method="POST" novalidate>
         {{ form.hidden_tag() }}
         <p>
             {{ form.username.label }}<br>
@@ -22,4 +23,5 @@
         <p>{{ form.submit() }}</p>
     </form>
     <p>First Time User? <a href="{{ url_for('register') }}">Click here to create an account!</a></p>
+</div>
 {% endblock %}
