@@ -6,6 +6,8 @@ BASEDIR = os.path.abspath(os.path.dirname(__file__))
 class ConfigClass(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'there-is-no-key'
 
+    LANGUAGES = ['en', 'fr']
+
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(BASEDIR, 'trafficapp.db')
 

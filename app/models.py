@@ -21,10 +21,8 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
-    events = db.relationship('Events', backref='user_events', lazy = 'dynamic') 
 
-    posts = db.relationship('Post', backref='user_posts', lazy='dynamic')
+    events = db.relationship('Events', backref='user_events', lazy = 'dynamic') 
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -49,12 +47,3 @@ class Events(db.Model):
     
     def _repr_(self):
         return f'<Events {self.id}>'
-    
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    body = db.Column(db.String(100))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)   
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-
-    def __repr__(self):
-        return f'<Post {self.body}>'

@@ -75,12 +75,18 @@
         {% if reply %}
         <div class="cards">
             {% for key, value in reply.items() %}
-                <div class="card">{{ key }}: {{ value}}</div>
+                <div class="card">
+                        <p><i>{{ key }}</i></p>
+                        <h3><em>{{ value }}</em></h3>
+                </div>
             {% endfor %}
         {% endif %}
         {% if current_weather %}
             {% for key, value in current_weather.items() %}
-                <div class="card">{{ key }}: {{ value}}</div>
+                <div class="card">
+                    <p><i>{{ key }}</i></p>
+                    <h3><em>{{ value }}</em></h3>
+                </div>
             {% endfor %}
         {% endif %}
         <br>
@@ -107,15 +113,19 @@
 </div>
 <!---->
 <div style="width: 100%; display: flex; justify-content: space-between; bottom: 0;">
-    <div style="width: 20%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
+    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
     </div>
-    <div style="width: 20%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
+    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
     </div>
-    <div style="width: 20%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
+    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
     </div>
-    <div style="width: 20%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
+    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
     </div>
-    <div style="width: 20%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
+    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
+    </div>
+    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
+    </div>
+    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
     </div>
 </div>
 {% endblock %}

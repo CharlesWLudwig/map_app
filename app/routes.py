@@ -18,7 +18,7 @@ from app import app, db
 @login_required
 def home():
     posts = []
-
+   
     return render_template('profile.html', title='Home', posts=posts)
 
 @app.route('/')

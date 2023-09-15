@@ -12,4 +12,5 @@ flask-forms
 flask-login
 flask-sqlalchemy
 flask-migrate
+flask-babel
 email-validator

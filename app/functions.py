@@ -30,9 +30,9 @@ def creatingFoliumMap(browser_latitude, browser_longitude):
     if data['flowSegmentData']['roadClosure']:
         reply['road_closure'] = 'The road is closed!'
     else:
-        reply['road_type'] = road_types[data['flowSegmentData']['frc']]
-        reply['road_speed'] = f"{data['flowSegmentData']['currentSpeed']} mph"
-        reply['road_speed_time'] = f"{data['flowSegmentData']['currentTravelTime']} seconds to pass"
+        reply['road type'] = road_types[data['flowSegmentData']['frc']]
+        reply['road speed'] = f"{data['flowSegmentData']['currentSpeed']} mph"
+        reply['road speed time'] = f"{data['flowSegmentData']['currentTravelTime']} seconds to pass"
 
     points = [(i['latitude'], i['longitude']) for i in data['flowSegmentData']['coordinates']['coordinate']]
     
@@ -116,8 +116,8 @@ def getCurrentWeather(browser_latitude, browser_longitude):
     reply['description'] = weather_data['weather'][0]['description']
     reply['temperature'] = weather_data['main']['temp'] 
     reply['feeling'] =weather_data['main']['feels_like']
-    reply['sunrise_time'] = weather_data['sys']['sunrise']
-    reply['sunset_time'] = weather_data['sys']['sunset']
+    reply['sunrise time'] = weather_data['sys']['sunrise']
+    reply['sunset time'] = weather_data['sys']['sunset']
 
     return reply
 
