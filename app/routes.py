@@ -11,7 +11,7 @@ import pandas as pd
 from .config import ConfigClass
 import json
 from .models import User
-from .functions import creatingFoliumMap, getBrowserLocation, getCurrentWeather, convert_latlon_geojson
+from .functions import creatingFoliumMap, getBrowserLocation, getCurrentWeather, convert_latlon_geojson, getStateAlerts, getWeatherForecast
 from app import app, db
 
 @app.route('/home')
@@ -24,6 +24,11 @@ def home():
 @app.route('/')
 @app.route('/index')
 def index():
+
+    """
+    getStateAlerts
+    """
+
     return render_template('landingpage.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -86,9 +91,9 @@ def profile_get():
     user = "user"
 
     # Starting Map of User Location
-    map = folium.Map(location=[0, 0], tiles='Stamen Terrain', zoom_start=12)
+    map = folium.Map(location=[0, 0], tiles='Stamen Terrain', zoom_start=2)
 
-    # Plotting data from dataframes
+    # Plotting data from dataframes (main cities example)
     data = pd.DataFrame({
         'lon':[-58, 2, 145, 30.32, -4.03, -73.57, 36.82, -38.5],
         'lat':[-34, 49, -38, 59.93, 5.33, 45.52, -1.29, -12.97],
@@ -171,6 +176,10 @@ def profile_post():
        reply, points = creatingFoliumMap(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
        
        folium.PolyLine(points, color='green', weight=10).add_to(map)
+       
+       """
+       getWeatherForecast
+       """
 
        # Plotting data from dataframes
        data = pd.DataFrame({

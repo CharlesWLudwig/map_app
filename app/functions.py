@@ -199,3 +199,34 @@ def convert_latlon_geojson(browser_latitude, browser_longitude):
     json_endpoint = json.dumps(feature_col_res)
 
     return json_endpoint
+
+def getWeatherForecast(browser_latitude, browser_longitude):
+    """
+    NOAA
+    forecast - forecast for 12h periods over the next seven days
+    forecastHourly - forecast for hourly periods over the next seven days
+    forecastGridData - raw forecast data over the next seven days
+    """
+
+    weather_url = f"https://api.weather.gov/points/{browser_latitude},{browser_longitude}"
+
+    response = requests.get(weather_url)
+
+    if response.status_code == 200:
+        weather_resp = response.json()
+        weather_dict = {}
+
+    for i in weather_resp['properties']:
+        weather_dict[i] = weather_resp['properties'][i]
+
+    return weather_dict
+
+def getStateAlerts(state):
+    alerts_url = f"https://api.weather.gov/alerts/active?area={state}"
+
+    alerts_response = requests.get(alerts_url)
+
+    if alerts_response.status_code == 200:
+        alerts_response_json = alerts_response.json()
+
+    return alerts_response_json
