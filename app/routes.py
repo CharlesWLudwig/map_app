@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from pprint import pprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+import asyncio
+import time
 import requests
 from .forms import LoginForm, RegistrationForm
 from flask_login import current_user, login_user, logout_user, login_required
@@ -14,24 +16,38 @@ import pandas as pd
 from .config import ConfigClass
 import json
 from .models import User
-from .functions import creatingFoliumMap, getBrowserLocation, getStateAlerts, getWeatherForecast
+from .functions import creatingFoliumMap, getBrowserLocation, getWeatherForecast
 from app import app, db
 
 @app.route('/home')
 @login_required
 def home():
+    # For the logged in user
     posts = []
-   
+
     return render_template('landingpage.html', title='Home', posts=posts)
 
 @app.route('/')
 @app.route('/index')
 def index():
-
+    # For public access
     """
     getStateAlerts
-    """
-    return render_template('landingpage.html')
+    """       
+    map = folium.Map(location=[0, 0], zoom_start=2)
+    
+    folium.TileLayer('stamenterrain').add_to(map)
+    folium.TileLayer('stamentoner').add_to(map)
+    folium.TileLayer('stamenwatercolor').add_to(map)
+    folium.TileLayer('cartodbpositron').add_to(map)
+    folium.TileLayer('openstreetmap').add_to(map)
+
+    folium.LayerControl().add_to(map)
+
+    minimap = plugins.MiniMap()
+    map.add_child(minimap)
+    
+    return render_template('landingpage.html', map=map)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -101,6 +117,9 @@ def profile_get():
 
     folium.GeoJson(data).add_to(map)
            
+    minimap = plugins.MiniMap()
+    map.add_child(minimap)
+
     return render_template("profile.html", map = map, user=user)   
 
 @app.route('/profile', methods = ["POST"])
@@ -112,7 +131,7 @@ def profile_post():
        browser_latitude = request.form.get("browser_latitude")
        browser_longitude = request.form.get("browser_longitude")
 
-       geocode_data, webcam_data = getBrowserLocation(browser_latitude=browser_latitude, 
+       geocode_data = getBrowserLocation(browser_latitude=browser_latitude, 
        browser_longitude=browser_longitude)
            
        df = pd.DataFrame(geocode_data)
@@ -219,13 +238,11 @@ def profile_post():
        minimap = plugins.MiniMap()
        map.add_child(minimap)
 
-       nearby_state_alerts = getStateAlerts(state=weather_dict['relativeLocation']['properties']['state'])
+#       nearby_state_alerts = getStateAlerts(state=weather_dict['relativeLocation']['properties']['state'])
 
 #      print(nearby_state_alerts)
        
-#      current_weather = getCurrentWeather(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
-
-       return render_template("profile.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, geocode_data = geocode_data, user=user, webcam_data = webcam_data)   
+       return render_template("profile.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, user=user)   
 
     return redirect(url_for('profile_get')) 
 

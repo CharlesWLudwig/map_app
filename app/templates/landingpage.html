@@ -2,9 +2,8 @@
 
 {% block content %}
 
-THE LANDING PAGE
+{% if map %}
+    {{ map._repr_html_() | safe }}
+{% endif %}
 
-    {% if weather_dict %}
-        <img src="https://radar.weather.gov/ridge/standard/{{ weather_dict }}_loop.gif" alt="radar station">
-    {% endif %}
 {% endblock %}

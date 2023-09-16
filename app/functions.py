@@ -9,7 +9,7 @@ import os
 import random
 import requests
 import json
-
+       
 def creatingFoliumMap(browser_latitude, browser_longitude):  
     reply = {} 
 
@@ -75,6 +75,7 @@ def getBrowserLocation(browser_latitude, browser_longitude):
             "postal_code": postalcode,
         }
 
+        """        
         webcams_api_key = os.getenv("WEBCAMS_API_KEY")
 
         webcams_api_host = os.getenv("WEBCAMS_API_HOST")
@@ -93,30 +94,8 @@ def getBrowserLocation(browser_latitude, browser_longitude):
 
             print("WEBCAM RESPONSE")
             print(webcam_dict_response)
-
-    return geocode_data_info, webcam_dict_response
-"""
-def getCurrentWeather(browser_latitude, browser_longitude):
-    mapquest_api = os.getenv('OPENWEATHER_API')
-
-    reply = {}
-
-    # Reverse geocode browser longitude and latitude to an address
-    weather_url = f'https://api.openweathermap.org/data/2.5/weather?lat={browser_latitude}&lon={browser_longitude}&units=imperial&appid={mapquest_api}'
-
-    weather_data = requests.get(weather_url)
-
-    if weather_data.status_code == 200:
-        weather_data = weather_data.json()
-
-    reply['description'] = weather_data['weather'][0]['description']
-    reply['temperature'] = weather_data['main']['temp'] 
-    reply['feeling'] =weather_data['main']['feels_like']
-    reply['sunrise time'] = weather_data['sys']['sunrise']
-    reply['sunset time'] = weather_data['sys']['sunset']
-
-    return reply
-    """
+            """
+    return geocode_data_info
 
 def getWeatherForecast(browser_latitude, browser_longitude):
     """
@@ -154,13 +133,3 @@ def getWeatherForecast(browser_latitude, browser_longitude):
         forecast_dict[f"{i['name']}"] = i
 
     return weather_dict, forecast_dict
-
-def getStateAlerts(state):
-    alerts_url = f"https://api.weather.gov/alerts/active?area={state}"
-
-    alerts_response = requests.get(alerts_url)
-
-    if alerts_response.status_code == 200:
-        alerts_response_json = alerts_response.json()
-
-    return alerts_response_json
