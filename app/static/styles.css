@@ -1,6 +1,6 @@
 body {
-  overflow-y: hidden;
-  overflow-x: hidden;
+    overflow-y: hidden;
+    overflow-x: hidden;
 }
 
 .error {
@@ -12,6 +12,7 @@ body {
     grid-template-columns: repeat(3, 1fr);
     grid-auto-rows: auto;
     grid-gap: 1rem;
+    padding: 10px;
 }
 
 .card {
@@ -20,7 +21,7 @@ body {
     color: black;
     font-weight: bold;
     text-align: center;
-    border-radius: 4px;
+    border-radius: 10px;
     padding: 0.5rem;
     height: 150px;
     width: 150px;
@@ -48,4 +49,65 @@ img {
     flex-direction: row; 
     justify-content: space-evenly; 
     align-items: center;
+}
+
+.imgContainer {
+  position: relative;
+  text-align: center;
+}
+
+.imgContainer img {
+  opacity: 1;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.5s, filter 0.5s ease-in-out;
+  filter: grayscale(100%);
+}
+
+.imgContainer:hover img {
+  filter: grayscale(0);
+  transform: scale(1);
+}
+
+@keyframes opacity_image {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+.forecast_tab {
+  overflow: hidden;
+  border: 1px solid black;
+  background-color: lightblue;
+}
+
+.forecast_tab button {
+  display: inline-flex;
+  flex: wrap;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 1s;
+  font-size: 1.5em;
+}
+
+.forecast_tab button.active {
+  background-color: blue;
+  color: white;
+}
+
+.forecast_tab button:hover {
+  background-color: burlywood;
+}
+
+.closeTab {
+  float: right;
+  cursor: pointer;
+  font-size: 28px;
+}
+
+.closeTab:hover {
+  color: rgb(12, 46, 148);
+  font-weight: 900;
 }

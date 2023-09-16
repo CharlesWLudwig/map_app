@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-    
-    WELCOME
 
+THE LANDING PAGE
+
+    {% if weather_dict %}
+        <img src="https://radar.weather.gov/ridge/standard/{{ weather_dict }}_loop.gif" alt="radar station">
+    {% endif %}
 {% endblock %}

@@ -1,17 +1,20 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from pprint import pprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+import requests
 from .forms import LoginForm, RegistrationForm
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
 import folium
 from folium import plugins
+from folium.elements import *
 from datetime import datetime
 import pandas as pd
 from .config import ConfigClass
 import json
 from .models import User
-from .functions import creatingFoliumMap, getBrowserLocation, getCurrentWeather, convert_latlon_geojson, getStateAlerts, getWeatherForecast
+from .functions import creatingFoliumMap, getBrowserLocation, getStateAlerts, getWeatherForecast
 from app import app, db
 
 @app.route('/home')
@@ -19,7 +22,7 @@ from app import app, db
 def home():
     posts = []
    
-    return render_template('profile.html', title='Home', posts=posts)
+    return render_template('landingpage.html', title='Home', posts=posts)
 
 @app.route('/')
 @app.route('/index')
@@ -28,7 +31,6 @@ def index():
     """
     getStateAlerts
     """
-
     return render_template('landingpage.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -90,23 +92,15 @@ def register():
 def profile_get():
     user = "user"
 
-    # Starting Map of User Location
-    map = folium.Map(location=[0, 0], tiles='Stamen Terrain', zoom_start=2)
-
     # Plotting data from dataframes (main cities example)
-    data = pd.DataFrame({
-        'lon':[-58, 2, 145, 30.32, -4.03, -73.57, 36.82, -38.5],
-        'lat':[-34, 49, -38, 59.93, 5.33, 45.52, -1.29, -12.97],
-        'name':['Buenos Aires', 'Paris', 'melbourne', 'St Petersbourg', 'Abidjan', 'Montreal', 'Nairobi', 'Salvador'],
-        'value':[10, 12, 40, 70, 23, 43, 100, 43]
-    }, dtype=str)
+    countries_url = 'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
+    response = requests.get(countries_url)
+    data = response.json()
 
-    for i in range(0,len(data)):
-        folium.Marker(
-            location=[data.iloc[i]['lat'], data.iloc[i]['lon']],
-            popup=data.iloc[i]['name'],
-        ).add_to(map)
-        
+    map = folium.Map(location=[0, 0], zoom_start=2)
+
+    folium.GeoJson(data).add_to(map)
+           
     return render_template("profile.html", map = map, user=user)   
 
 @app.route('/profile', methods = ["POST"])
@@ -118,28 +112,9 @@ def profile_post():
        browser_latitude = request.form.get("browser_latitude")
        browser_longitude = request.form.get("browser_longitude")
 
-       # Starting Map of User Location
-       map = folium.Map(location=[browser_latitude, browser_longitude], tiles='Stamen Terrain', zoom_start=12)
-
-       geojson_data = convert_latlon_geojson(browser_latitude=browser_latitude, 
+       geocode_data, webcam_data = getBrowserLocation(browser_latitude=browser_latitude, 
        browser_longitude=browser_longitude)
-
-       folium.GeoJson(geojson_data, name="geojson").add_to(map)
-
-       folium.LayerControl().add_to(map)
-
-       json_df = pd.read_json(geojson_data)   
-       json_result = json_df.to_json(orient='records')
-       parsed = json.loads(json_result)
-       json_out = json.dumps(parsed, indent=4)
-
-       # Send to PostGres Database
-#       with open('json_out.json', 'w') as outfile:
-#            outfile.write(json_out)
-
-       geocode_data = getBrowserLocation(browser_latitude=browser_latitude, 
-       browser_longitude=browser_longitude)
-             
+           
        df = pd.DataFrame(geocode_data)
 
        # print(df)
@@ -168,40 +143,97 @@ def profile_post():
            print(e)
 
        """
-       folium.Marker(
-            [browser_latitude, browser_longitude], popup="<i>Home Location</i>", 
-        ).add_to(map)
-       
        # Starting to add road conditions
        reply, points = creatingFoliumMap(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
-       
-       folium.PolyLine(points, color='green', weight=10).add_to(map)
+
+       weather_dict, forecast_dict = getWeatherForecast(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
+
+       day_dict = {}
+       night_dict = {}
+        
+       for key, value in forecast_dict.items():
+#          print(key)
+
+           if 'Night' in key:
+               night_dict[key] = value
+           elif 'night' in key:
+               night_dict[key] = value
+           else:
+               day_dict[key] = value
+       """"
+       for key in day_dict.keys():
+           print(key)
+
+       for key in night_dict.keys():
+           print(key)
+       """
        
        """
-       getWeatherForecast
+       print(f"GridX: {weather_dict['gridX']}")
+       print(f"GridY: {weather_dict['gridY']}")         
+       print(f"fireWeatherZone: {weather_dict['fireWeatherZone']}")
+       print(f"ForecastOffice: {weather_dict['forecastOffice']}")
+       print(f"County: {weather_dict['county']}")
+       print(f"Forecast: {weather_dict['forecast']}")
+       print(f"ForecastZone: {weather_dict['forecastZone']}")
+       print(f"Observation Station: {weather_dict['observationStations']}")
+       print(f"Forecast Hourly: {weather_dict['forecastHourly']}")
+       print(f"Forecast Grid Data: {weather_dict['forecastGridData']}")
+       print(f"TimeZone: {weather_dict['timeZone']}")
+       print(f"Radar Station: {weather_dict['radarStation']}")
+       print(f"City: {weather_dict['relativeLocation']['properties']['city']}")
+       print(f"State: {weather_dict['relativeLocation']['properties']['state']}")
+       print(f"Distance: {weather_dict['relativeLocation']['properties']['distance']}")
+       print(f"Bearing: {weather_dict['relativeLocation']['properties']['bearing']}")
        """
+       
+       map = folium.Map(location=[browser_latitude, browser_longitude], zoom_start=6)
 
-       # Plotting data from dataframes
-       data = pd.DataFrame({
-            'lon':[-58, 2, 145, 30.32, -4.03, -73.57, 36.82, -38.5],
-            'lat':[-34, 49, -38, 59.93, 5.33, 45.52, -1.29, -12.97],
-            'name':['Buenos Aires', 'Paris', 'melbourne', 'St Petersbourg', 'Abidjan', 'Montreal', 'Nairobi', 'Salvador'],
-            'value':[10, 12, 40, 70, 23, 43, 100, 43]
-        }, dtype=str)
+       folium.GeoJson(weather_dict['fireWeatherZone'], name='Fire Zones').add_to(map)
 
-       for i in range(0,len(data)):
-            folium.Marker(
-                location=[data.iloc[i]['lat'], data.iloc[i]['lon']],
-                popup=data.iloc[i]['name'],
-            ).add_to(map)
-            
-       current_weather = getCurrentWeather(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
+       folium.GeoJson(weather_dict['county'], name='county').add_to(map)
 
-       return render_template("profile.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, geocode_data = geocode_data, current_weather = current_weather, geojson_data = geojson_data, json_result = json_result, user=user)   
+       folium.GeoJson(weather_dict['observationStations'], name='Observation Stations').add_to(map)     
+
+       folium.GeoJson(weather_dict['forecastZone'], name='Forecast Zone').add_to(map)
+
+       folium.Marker([browser_latitude, browser_longitude], name='My Location', popup="<i>My Location</i>").add_to(map)
+
+#       forecastOfficeAddress = weather_dict["forecastZone"]["properties"]["forecastOffices"][0]
+       # Getting the Forecasting Office 
+       forecast_office_url = f"{weather_dict['forecastOffice']}"
+
+       response = requests.get(forecast_office_url)
+
+       if response.status_code == 200:
+           forecastOfficeAddress = response.json()
+
+           print(f"Forecast Office Address: {forecastOfficeAddress['address']}")
+           print(f"Forecast Office Address: {forecastOfficeAddress['telephone']}")
+           print(f"Forecast Office Address: {forecastOfficeAddress['email']}")
+
+       folium.CircleMarker(location=([browser_latitude, browser_longitude]),radius=50, fill_color='red', popup=f'{forecastOfficeAddress}').add_to(map)
+
+       folium.LayerControl(collapsed=False).add_to(map)
+        
+       minimap = plugins.MiniMap()
+       map.add_child(minimap)
+
+       nearby_state_alerts = getStateAlerts(state=weather_dict['relativeLocation']['properties']['state'])
+
+#      print(nearby_state_alerts)
+       
+#      current_weather = getCurrentWeather(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
+
+       return render_template("profile.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, geocode_data = geocode_data, user=user, webcam_data = webcam_data)   
 
     return redirect(url_for('profile_get')) 
 
 """
+@app.route('/baseline')
+def baseline():
+    return "landingpage.html"
+
 @app.route("/api/country", methods=["GET"])
 def get_all_countries():
     if connection_records:
@@ -221,4 +253,28 @@ def get_all_countries():
         return jsonify(result)
     else:
         return jsonify({"error": f"country not found."}), 404       
+"""
+"""       
+       json_df = pd.read_json(f"{weather_dict['fireWeatherZone']}")   
+       json_result = json_df.to_json(orient='records')
+       parsed = json.loads(json_result)
+       json_out = json.dumps(parsed, indent=4)
+
+       with open('fire_data.geojson', 'w') as outfile:
+            outfile.write(json_out)
+"""
+"""
+# Plotting data from dataframes
+data = pd.DataFrame({
+    'lon':[-58, 2, 145, 30.32, -4.03, -73.57, 36.82, -38.5],
+    'lat':[-34, 49, -38, 59.93, 5.33, 45.52, -1.29, -12.97],
+    'name':['Buenos Aires', 'Paris', 'melbourne', 'St Petersbourg', 'Abidjan', 'Montreal', 'Nairobi', 'Salvador'],
+    'value':[10, 12, 40, 70, 23, 43, 100, 43]
+}, dtype=str)
+
+for i in range(0,len(data)):
+    folium.Marker(
+        location=[data.iloc[i]['lat'], data.iloc[i]['lon']],
+        popup=data.iloc[i]['name'],
+    ).add_to(map)
 """

@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from pprint import pprint
 from flask_sqlalchemy import SQLAlchemy
-from shapely.geometry import Point as Shapely_point, mapping
-from geojson import Point as Geoj_point, Polygon as Geoj_polygon, Feature, FeatureCollection
 import folium
 from folium import plugins
 import pandas as pd
@@ -76,30 +75,27 @@ def getBrowserLocation(browser_latitude, browser_longitude):
             "postal_code": postalcode,
         }
 
-        print(geocode_data_pop)
-
         webcams_api_key = os.getenv("WEBCAMS_API_KEY")
 
         webcams_api_host = os.getenv("WEBCAMS_API_HOST")
-        
-        url = f"https://webcamstravel.p.rapidapi.com/webcams/list/nearby=%7{browser_latitude}%7D,%7{browser_longitude}%7D,%7Bradius%7D"
 
-        params = {
-            "show":"webcams:image,location",
-            "lang":"en"
-        }
+        webcam_url = f"https://api.windy.com/webcams/api/v3/webcams?lang=en&limit=50&offset=0&sortKey=popularity&sortDirection=desc&nearby={browser_latitude}%2C{browser_longitude}%2C250&include=categories,images,location,player,urls&categories=landscape,traffic,meteo,building,indoor,city,water,airport,square,sportarea"
 
         headers = {
-            "X-RapidAPI-Key": webcams_api_key,
-            "X-RapidAPI-Host": webcams_api_host
+            "x-windy-api-key": webcams_api_key,
+            'Accept': "application/json"
         }
 
-        response = requests.get(url, headers=headers, params=params)
+        webcam_response = requests.get(webcam_url, headers=headers)
 
-        print(response.json())
+        if webcam_response.status_code == 200:
+            webcam_dict_response = webcam_response.json()
 
-    return geocode_data_info
+            print("WEBCAM RESPONSE")
+            print(webcam_dict_response)
 
+    return geocode_data_info, webcam_dict_response
+"""
 def getCurrentWeather(browser_latitude, browser_longitude):
     mapquest_api = os.getenv('OPENWEATHER_API')
 
@@ -120,85 +116,7 @@ def getCurrentWeather(browser_latitude, browser_longitude):
     reply['sunset time'] = weather_data['sys']['sunset']
 
     return reply
-
-def convert_latlon_geojson(browser_latitude, browser_longitude):
-    buffer_geocircle_distance = 1.0
-    
-    error_response = {}
-
-    #is lon valid and numeric or not
-    try:
-        browser_longitude = float(browser_longitude)
-    except ValueError:
-        error_response['longitude error'] = 'longitude argument should be numeric'
-        error_response['value given'] = browser_longitude
-        return jsonify(error_response)
-
-    # is lon in or out of range
-    if browser_longitude < -180.0 or browser_longitude > 180.0:
-        error_response['longitude error'] = 'longitude argument value out of range'
-        error_response['value given'] = browser_longitude
-        return jsonify(error_response)
-
-    #is lat valid and numeric or not
-    try:
-        browser_latitude = float(browser_latitude)
-    except ValueError:
-        error_response['latitude error'] = 'latitude argument should be numeric'
-        error_response['value given'] = browser_latitude
-        return jsonify(error_response)
-
-    # is lat in or out of range
-    if browser_latitude < -90.0 or browser_latitude > 90.0:
-        error_response['latitude error'] = 'latitude argument value out of range'
-        error_response['value given'] = browser_latitude
-        return jsonify(error_response)
-
-    # check to see if buffer_geocircle_distance argument is numeric and valid
-    try:
-        buffer_geocircle_distance = float(buffer_geocircle_distance)
-    except ValueError:
-        error_response['buffer distance error'] = 'buffer_geocircle_distance argument should be numeric'
-        error_response['value given'] = buffer_geocircle_distance
-        return jsonify(error_response)
-
-    # is lat in or out of range
-    if buffer_geocircle_distance < -0.001 or buffer_geocircle_distance > 100:
-        error_response['buffer distance error'] = 'buffer_geocircle_distance argument value out of range'
-        error_response['value given'] = buffer_geocircle_distance
-        return jsonify(error_response)
-
-    # Choose a shapely point
-    shapely_point = Shapely_point(browser_longitude, browser_latitude)
-    
-    # use SHapely buffer function to create Shapely point to create a buffer polygon
-    shapely_point_buffer = shapely_point.buffer(buffer_geocircle_distance / 111)
-    #use Shapely mapping function to create a dictionary from polygon object [type, coordinate]
-    shapely_point_buff_dict = mapping(shapely_point_buffer)
-    # get the coordinates from the dictionary
-    shapely_point_buff_coords = shapely_point_buff_dict['coordinates']
-
-    # use the geojson library to create two features (a point and its buffer)
-    point_feature = Feature(geometry=Geoj_point((browser_longitude, browser_latitude)))
-
-    point_feature['properties']['name'] = 'API Point'
-    point_feature['properties']['marker-color'] = 'red'
-
-    # buffer polygon, colored blue 
-    poly_feature = Feature(geometry=Geoj_polygon(shapely_point_buff_coords))
-    poly_feature['properties']['name'] = "API point buffer"
-    poly_feature['properties']['stroke'] = 'blue'
-    poly_feature['properties']['fill'] = 'blue'
-    poly_feature['properties']['fill-capacity'] = 0.3
-
-    # create a feature collection with polgyon and point
-    feature_col_res = FeatureCollection([point_feature, poly_feature])
-
-    # return jsonify(feature_col_res)
-    # json_endpoint = jsonify(feature_col_res)
-    json_endpoint = json.dumps(feature_col_res)
-
-    return json_endpoint
+    """
 
 def getWeatherForecast(browser_latitude, browser_longitude):
     """
@@ -219,7 +137,23 @@ def getWeatherForecast(browser_latitude, browser_longitude):
     for i in weather_resp['properties']:
         weather_dict[i] = weather_resp['properties'][i]
 
-    return weather_dict
+    future_url = weather_dict['forecast']
+
+    response = requests.get(future_url)
+    if response.status_code == 200:
+        daily_dict = {}
+
+        future_data = response.json()
+
+    for i in future_data['properties']:
+        daily_dict[i] = future_data['properties'][i]
+    
+    forecast_dict = {}
+
+    for i in daily_dict['periods']:
+        forecast_dict[f"{i['name']}"] = i
+
+    return weather_dict, forecast_dict
 
 def getStateAlerts(state):
     alerts_url = f"https://api.weather.gov/alerts/active?area={state}"

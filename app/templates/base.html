@@ -33,7 +33,8 @@
             <a href="{{ url_for('logout') }}">Logout</a>
             {% endif %}
         {% endif %}
-    </div>
+    </div>       
+    
     {% with messages = get_flashed_messages() %}
     {% if messages %}
     <ul>
@@ -43,6 +44,7 @@
     </ul>
     {% endif %}
     {% endwith %}
+
     {% block content %}
     {% endblock %}
   </body>

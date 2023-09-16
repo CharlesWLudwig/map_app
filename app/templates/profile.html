@@ -41,7 +41,7 @@
 
         document.getElementById("target_longitude").value = target.longitude;
     });
-</script>  
+</script> 
 
 <div style="display: flex; justify-content: space-between;">
     <form action="{{ url_for("profile_post")}}" method="post" id="latlongform">
@@ -90,42 +90,103 @@
             {% endfor %}
         {% endif %}
         <br>
-        </div>        
-        <!--
-        {% if geojson_data %}
-            {{ geojson_data }}
-        {% endif %}
-        <br>
-            {% if json_result %}
-                {{ json_result }}
-            {% endif %}
-        -->
+        </div>      
         <!-- {{ forecast_weather }} -->
         </div>
-    <div style="float: right; right: 0; width: 50%">
-        {% if map %}
+    <div style="float: right; width: 50%">
+       {% if map %}
         <div class="cards">
-            <div class="card" style="width: 50vw; height: 500px">{{ map._repr_html_() | safe }}
+            <div class="card" style="float: right; right: 10px; width: 40vw; height: 500px">
+                {{ map._repr_html_() | safe }}
             </div>
         </div>
         {% endif %}
     </div>
 </div>
-<!---->
-<div style="width: 100%; display: flex; justify-content: space-between; bottom: 0;">
-    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
-    </div>
-    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
-    </div>
-    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
-    </div>
-    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
-    </div>
-    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
-    </div>
-    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
-    </div>
-    <div style="width: 14%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">
-    </div>
+<!--
+{% if forecast_dict %}
+{% for key, value in forecast_dict.items() %}
+        <img src="{{ value['name']['icon'] }}" alt="{{value['name']}}_pic" />
+{% endfor %}
+{% endif %}
+-->
+
+{% if day_dict %}
+<div class="forecast_tab">
+    <button class="tablinks" onclick="openForecastTab(event, 'Day')" id="defaultTab">Day</button>
+    <button class="tablinks" onclick="openForecastTab(event, 'Night')">Night</button>
 </div>
+
+  <div id="Day" class="forecast_tabcontent">
+    <span onclick="this.parentElement.style.display='none'" class="closeTab">&times</span>
+    <h3>DayTime</h3>
+        {{ day_dict['shortForecast']}}    
+        {{ day_dict['detailedForecast']}}
+
+    <div style="width: 100%; display: flex; flex: wrap; justify-content: space-evenly;">
+        {% for key, value in day_dict.items() %}
+        <div style="width: 10%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">       
+            <div class="imgContainer">
+                <img style="opacity: 50%" src="{{value['icon']}}" alt="weather_pic" />
+                {{ value['name'] }}
+                <br>
+                {{ value['temperature'] }} {{ value['temperatureUnit'] }} - {{ value['temperatureTrend'] }}
+                <br>
+                {{ value['windSpeed'] }} {{ value['windDirection'] }}
+                <br>
+                {{ value['probabilityOfPrecipitation']['value'] }} {{ value['probabilityOfPrecipitation']['unitCode'][1] }}
+                <br>
+                {{ value['relativeHumidity']['value'] }} {{ value['relativeHumidity']['unitCode'][1] }} 
+            </div> 
+            </div>
+        {% endfor %}
+        </div>
+  </div>
+{% endif %}
+
+{% if night_dict %}
+<div id="Night" class="forecast_tabcontent">
+    <span onclick="this.parentElement.style.display='none'" class="closeTab">&times</span>
+    <h3>NightTime</h3>
+        {{ night_dict['shortForecast']}}    
+        {{ night_dict['detailedForecast']}}
+
+    <div style="width: 100%; display: flex; flex: wrap; justify-content: space-evenly;">
+        {% for key, value in night_dict.items() %}
+        <div style="width: 10%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">       
+            <div class="imgContainer">
+                <img style="opacity: 50%" src="{{value['icon']}}" alt="weather_pic" />
+                {{ value['name'] }}
+                <br>
+                {{ value['temperature'] }} {{ value['temperatureUnit'] }} - {{ value['temperatureTrend'] }}
+                <br>
+                {{ value['windSpeed'] }} {{ value['windDirection'] }}
+                <br>
+                {{ value['probabilityOfPrecipitation']['value'] }} {{ value['probabilityOfPrecipitation']['unitCode'][1] }}
+                <br>
+                {{ value['relativeHumidity']['value'] }} {{ value['relativeHumidity']['unitCode'][1] }} 
+            </div> 
+            </div>
+        {% endfor %}
+        </div>
+  </div>
+{% endif %}
+
+<script>
+    function openForecastTab(e, forecastTime) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("forecast_tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(forecastTime).style.display = "block";
+      e.currentTarget.className += " active";
+    }
+    
+    document.getElementById("defaultTab").click();
+    </script>
 {% endblock %}
