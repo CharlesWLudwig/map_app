@@ -21,7 +21,7 @@
     <link type="text/css" rel="stylesheet" href="https://api.mqcdn.com/sdk/place-search-js/v1.0.0/place-search.css"/>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-    
+
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body style="overflow:hidden;">
@@ -46,7 +46,57 @@
     </ul>
     {% endif %}
     {% endwith %}
+    <script>
+        let id;
+        let target;
+        let options;
+    
+        function success(pos) {
+        const crd = pos.coords;
+    
+        if (target.latitude === crd.latitude && target.longitude === crd.longitude) {
+            console.log("Congratulations, you reached the target");
+            navigator.geolocation.clearWatch(id);
+        }
+        }
+    
+        function error(err) {
+        console.error(`ERROR(${err.code}): ${err.message}`);
+        }
+    
+        target = {
+        
+        latitude: 0,
+        longitude: 0,
+        };
+    
+        options = {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 0,
+        };
+    
+        const watchID = navigator.geolocation.watchPosition((position) => {
+//            console.log(position.coords.latitude, position.coords.longitude);
+            document.getElementById("user_latitude").value = position.coords.latitude;
+    
+            document.getElementById("user_longitude").value = position.coords.longitude;
 
+            let user_latitude = document.getElementById("user_latitude").value   
+                    
+            let user_longitude = document.getElementById("user_longitude").value
+        
+            let uri = `https://api.weather.gov/points/${user_latitude},${user_longitude}`
+
+            $.get(uri, function(data, status) {
+                console.log(data)
+                console.log(uri)
+                document.getElementById('weather-city').innerText = data['properties']['relativeLocation']['properties']['city']
+
+                document.getElementById('weather-state').innerText = data['properties']['relativeLocation']['properties']['state']  
+            });
+        });
+    </script> 
     {% block content %}
     {% endblock %}
   </body> 

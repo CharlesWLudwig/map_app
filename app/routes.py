@@ -131,11 +131,12 @@ def profile_post():
        browser_latitude = request.form.get("browser_latitude")
        browser_longitude = request.form.get("browser_longitude")
 
+       """
        geocode_data = getBrowserLocation(browser_latitude=browser_latitude, 
        browser_longitude=browser_longitude)
            
        df = pd.DataFrame(geocode_data)
-
+       """
        # print(df)
        """
        try: 
