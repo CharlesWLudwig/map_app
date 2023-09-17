@@ -108,7 +108,7 @@ def register():
 def profile_get():
     user = "user"
 
-    # Plotting data from dataframes (main cities example)
+    # Plotting data from dataframes (main cities example) 
     countries_url = 'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
     response = requests.get(countries_url)
     data = response.json()
@@ -209,15 +209,38 @@ def profile_post():
        
        map = folium.Map(location=[browser_latitude, browser_longitude], zoom_start=6)
 
-       folium.GeoJson(weather_dict['fireWeatherZone'], name='Fire Zones').add_to(map)
+       folium.GeoJson(
+           weather_dict['fireWeatherZone'],
+           name='Fire Zones'
+        ).add_to(map)
 
-       folium.GeoJson(weather_dict['county'], name='county').add_to(map)
+       folium.GeoJson(
+           weather_dict['county'], 
+           name='county'
+        ).add_to(map)
 
-       folium.GeoJson(weather_dict['observationStations'], name='Observation Stations').add_to(map)     
+       folium.GeoJson(
+           weather_dict['observationStations'],
+           marker = folium.CircleMarker(
+               radius = 8,
+               weight = 5,
+               fill_color = 'yellow', 
+               fill_opacity = 1),
+               tooltip = folium.GeoJsonTooltip(fields = ['stationIdentifier'],                                  aliases=['Station: '],
+         sticky = True),
+         name='Observation Stations'
+         ).add_to(map)     
 
-       folium.GeoJson(weather_dict['forecastZone'], name='Forecast Zone').add_to(map)
+       folium.GeoJson(
+           weather_dict['forecastZone'], 
+           name='Forecast Zone'
+        ).add_to(map)
 
-       folium.Marker([browser_latitude, browser_longitude], name='My Location', popup="<i>My Location</i>").add_to(map)
+       folium.Marker(
+           [browser_latitude, browser_longitude], 
+           name='My Location', 
+           popup="<i>My Location</i>"
+        ).add_to(map)
 
 #       forecastOfficeAddress = weather_dict["forecastZone"]["properties"]["forecastOffices"][0]
        # Getting the Forecasting Office 
@@ -232,6 +255,10 @@ def profile_post():
            print(f"Forecast Office Address: {forecastOfficeAddress['telephone']}")
            print(f"Forecast Office Address: {forecastOfficeAddress['email']}")
 
+       forecasting_office_dict = [
+           forecastOfficeAddress['address'], forecastOfficeAddress['telephone'], forecastOfficeAddress['email']
+        ]
+
        folium.CircleMarker(location=([browser_latitude, browser_longitude]),radius=50, fill_color='red', popup=f'{forecastOfficeAddress}').add_to(map)
 
        folium.LayerControl(collapsed=False).add_to(map)
@@ -243,7 +270,7 @@ def profile_post():
 
 #      print(nearby_state_alerts)
        
-       return render_template("profile.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, user=user)   
+       return render_template("profile.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, user=user, office_dict = forecasting_office_dict)   
 
     return redirect(url_for('profile_get')) 
 

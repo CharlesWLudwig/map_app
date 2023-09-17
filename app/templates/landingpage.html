@@ -25,8 +25,8 @@ State:
 <script>
     $(document).ready(function(){
         $("button").click(function(){
-        // const state = document.getElementById('weather-state').innerText
-        let state = "WA"
+        const state = document.getElementById('weather-state').innerText
+        
         console.log(`My state is: ${state}`)
 
         $.get(`https://api.weather.gov/alerts/active?area=${state}`, function(data, status){
@@ -37,8 +37,9 @@ State:
     });
 </script>   
 
-{% if weather_dict %}
-    <img src="https://radar.weather.gov/ridge/standard/{{ weather_dict }}_loop.gif" alt="radar station">
-{% endif %}
+    </script>
+    {% if weather_dict %}
+        <img src="https://radar.weather.gov/ridge/standard/{{ weather_dict }}_loop.gif" alt="radar station">
+    {% endif %}
 
 {% endblock %}

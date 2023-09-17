@@ -58,6 +58,17 @@
         <div class="cards">
             <div class="card" style="float: right; right: 10px; width: 40vw; height: 500px">
                 {{ map._repr_html_() | safe }}
+
+                {% if office_dict %}
+                <ul style="font-size: 16px; list-style-type: none; float:left; left: 0;">
+                    {% for i in office_dict %}
+                <li>{{ i['streetAddress'] }}</li>
+                <li>{{ i['addressLocality'] }} {{ i['addressRegion'] }} {{ i['postalCode'] }}</li>
+                    {% endfor %}
+                    <li>{{ office_dict[-2] }}</li>
+                    <li>{{ office_dict[-1] }}</li>
+                </ul>
+                {% endif %}
             </div>
         </div>
         {% endif %}
