@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<h2>Nearby Cameras</h2>
+<h2 style="text-align: center;">Nearby Cameras</h2>
 <div id="cams_area">
 </div>
 
@@ -22,12 +22,31 @@ async function getLiveCams(
 
   let cam_data = await resp.json();
 
+  function sendData() {
+      var webcam_values = cam_data.result.webcams;
+      $.ajax({
+          url: '/process_traffic_cams',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ 
+            'value': webcam_values 
+          }),
+          success: function(response) {
+              console.log(response.result);
+          },
+          error: function(error) {
+              console.log(error);
+          }
+      });
+  }
+  
+  sendData()
+
   return cam_data.result.webcams;
 }
 
-const cameras = getLiveCams(event_latitude, event_longitude, 50, KEY)
-.then(value => document.getElementById('cams_area').innerHTML = value.map(v =>  
-`<div class="card-deck" style="display:inline-block; gap: 4px; justify-content: center; align-items: center">
+const cameras = getLiveCams(event_latitude, event_longitude, 50, KEY).then(value => document.getElementById('cams_area').innerHTML = value.map(v =>  
+`<div class="card-deck" style="display: inline-block; flex-direction: row; gap: 1em; justify-content: center; height="${v.image.sizes.preview.height}"; width="${v.image.sizes.preview.width};">
   <div class="cameraCard">
     <img src=${v.image.current.preview} class="card-img-top" height="${v.image.sizes.preview.height}" width="${v.image.sizes.preview.width}" alt="camera">
     <div class="card-body">
@@ -35,21 +54,9 @@ const cameras = getLiveCams(event_latitude, event_longitude, 50, KEY)
       <p class="card-text">
         ${v.location.city}, ${v.location.region}, ${v.location.country}
         <br>
-        <p id="latitude">${v.location.latitude}</p>
-        <p id="longitude">${v.location.longitude}</p>
-        ${v.status}
-      </p>
-      </div>
-      <div class="card-footer">
-          <small class="text-muted">
-            <a href=${v.url.current.desktop} target="_blank">See More of camera ${v.id}
-            </a>
-        </small>
       </div>
     </div>
-    <hr>
   </div>`
 ));
 </script>
-
 {% endblock %}

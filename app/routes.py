@@ -1,6 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify
 import os
 import pandas as pd
+from pprint import pprint
 from datetime import datetime
 from app import app, db
 from app.forms import EventForm, UpdateForm, RegistrationForm, LoginForm
@@ -53,6 +54,13 @@ def getLatLon(street, city, state, postalcode, country):
 def home():
     return render_template("home.html")
 
+@app.route('/process_traffic_cams', methods=['POST'])
+def process():
+    data = request.get_json()
+    result = data['value'] 
+    pprint(result[0])
+    return jsonify(result=result) 
+  
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
