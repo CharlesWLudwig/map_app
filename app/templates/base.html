@@ -3,101 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    
+    <script src="https://www.jqueryscript.net/demo/horizontal-panel-marquee/js/horizontal-panel.js"></script>
+    
+	<script src="../static/js/bootstable.js"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/style.css') }}" />
 
     {% if title %}
         <title>{{ title }} | MapPy</title>
     {% else %}
         <title>MapPy</title>
     {% endif %}
-
-    <link rel="stylesheet" href="../static/styles.css">
-
-    <!-- Map Searching (TBD) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
-    
-    <!-- Address Searching (TBD) -->
-    <script src="https://api.mqcdn.com/sdk/place-search-js/v1.0.0/place-search.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://api.mqcdn.com/sdk/place-search-js/v1.0.0/place-search.css"/>
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-
-    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
-<body style="overflow:hidden;">
-    <div>
-        {% if current_user.username %}
-            {{ current_user.username }} |
-        <a href="{{ url_for('home') }}">Home</a>
-        <a href="{{ url_for('profile_get') }}">Dashboard</a>
-        <a href="{{ url_for('logout') }}">Logout</a>  
-        {% else %}
-            <a href="{{ url_for('index') }}">MapPy | Home</a>
-            <a href="{{ url_for('login') }}">Login</a>
+<body>
+     <div class="content">
+        <div>
+            {% if current_user.username %}
+                {{ current_user.username }} |
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('get_events') }}">All Events</a>
+            <a href="{{ url_for('logout') }}">Logout</a>  
+            {% else %}
+                <a href="{{ url_for('home') }}">MapPy | Home</a>
+                <a href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+            <button onclick="DarkMode()">Toggle Dark Mode</button>
+    </div>       
+        
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
         {% endif %}
-</div>       
-    
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <ul>
-        {% for message in messages %}
-        <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% endwith %}
-    <script>
-        let id;
-        let target;
-        let options;
-    
-        function success(pos) {
-        const crd = pos.coords;
-    
-        if (target.latitude === crd.latitude && target.longitude === crd.longitude) {
-            console.log("Congratulations, you reached the target");
-            navigator.geolocation.clearWatch(id);
-        }
-        }
-    
-        function error(err) {
-        console.error(`ERROR(${err.code}): ${err.message}`);
-        }
-    
-        target = {
+        {% endwith %}
+        <br>
         
-        latitude: 0,
-        longitude: 0,
-        };
-    
-        options = {
-        enableHighAccuracy: false,
-        timeout: 5000,
-        maximumAge: 0,
-        };
-    
-        const watchID = navigator.geolocation.watchPosition((position) => {
-//            console.log(position.coords.latitude, position.coords.longitude);
-            document.getElementById("user_latitude").value = position.coords.latitude;
-    
-            document.getElementById("user_longitude").value = position.coords.longitude;
-
-            let user_latitude = document.getElementById("user_latitude").value   
-                    
-            let user_longitude = document.getElementById("user_longitude").value
-        
-            let uri = `https://api.weather.gov/points/${user_latitude},${user_longitude}`
-
-            $.get(uri, function(data, status) {
-                console.log(data)
-                console.log(uri)
-                document.getElementById('weather-city').innerText = data['properties']['relativeLocation']['properties']['city']
-
-                document.getElementById('weather-state').innerText = data['properties']['relativeLocation']['properties']['state']  
-            });
-        });
-    </script> 
-    {% block content %}
-    {% endblock %}
-  </body> 
+        {% block content %}
+        {% endblock %}
+        <script>
+            function DarkMode() {
+                let element = document.body;
+                element.classList.toggle("dark-mode");
+            }
+        </script>
+        </div>
+    </body>
 </html>

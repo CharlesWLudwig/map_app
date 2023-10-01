@@ -6,14 +6,17 @@
         <form action="" method="POST" novalidate>
         {{ form.hidden_tag() }}
         <p>
-            {{ form.username.label }}<br>
-            {{ form.username(size=32) }}<br>
+            <div class="hoverWarning">{{ form.username.label }}</div>
+            <div class="hide">Please enter your username</div>
+            {{ form.username(size=32) }}
+            <br>
             {% for error in form.username.errors %}
             <span class="error">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
-            {{ form.password.label }}<br>
+            <div class="hoverWarning">{{ form.password.label }}</div>
+            <div class="hide">Please enter your password</div>
             {{ form.password(size=32) }}<br>
             {% for error in form.password.errors %}
             <span class="error">[{{ error }}]</span>

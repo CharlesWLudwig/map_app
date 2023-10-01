@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="text-black text-uppercase text-center my-4">
+    <h1>{{ user.username }}'s Places</h1>
+
+    <div class="row">
+        <div class="column1" style="background-color:#aaa;">
+          <h2>Road Trip Events</h2>
+          
+          <div class="eventsForm">
+            <form action="/events/create" method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            {{ form.csrf_token }}
+            <p>
+                {{ form.event_name.label }}<br>
+                {{ form.event_name(size=32) }}<br>
+                {% for error in form.event_name.errors %}
+                <span class="error">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.event_street.label }}<br>
+                {{ form.event_street(size=32) }}<br>
+                {% for error in form.event_street.errors %}
+                <span class="error">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.event_city.label }}<br>
+                {{ form.event_city(size=32) }}<br>
+                {% for error in form.event_city.errors %}
+                <span class="error">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.event_state.label }}<br>
+                {{ form.event_state(size=32) }}<br>
+                {% for error in form.event_state.errors %}
+                <span class="error">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.event_country.label }}<br>
+                {{ form.event_country }}<br>
+                {% for error in form.event_country.errors %}
+                <span class="error">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.event_postalcode.label }}<br>
+                {{ form.event_postalcode(size=32) }}<br>
+                {% for error in form.event_postalcode.errors %}
+                <span class="error">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.event_type.label }}<br>
+                {{ form.event_type(size=32) }}<br>
+                {% for error in form.event_type.errors %}
+                <span class="error">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.event_date.label }}<br>
+                {{ form.event_date() }}<br>
+                {% for error in form.event_date.errors %}
+                <span class="error">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.event_duration.label }}<br>
+                {{ form.event_duration(size=32) }}<br>
+                {% for error in form.event_duration.errors %}
+                <span class="error">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <div style="display: flex; flex-direction: row;">
+                <p>{{ form.submit() }}</p> 
+            </div>    
+        </form>
+    </div>
+</div>
+<div class="column2" style="background-color:#bbb;">
+    <h2>My Events</h2>
+    <div class="row">
+        <div class="column" style="right: 0">
+            <div style="overflow-x:auto;">
+            <table id="myTable">
+                <tr>
+                <th onclick="sortTable(0)">
+                    Event Name:
+                </th>
+                <th onclick="sortTable(1)">
+                    Event Street:
+                </th>
+                <th onclick="sortTable(2)">
+                    Event City:
+                </th>
+                <th onclick="sortTable(3)">
+                    Event State Alerts:
+                </th>
+                <th onclick="sortTable(4)">
+                    Event Country:
+                </th>
+                <th onclick="sortTable(5)">
+                    Event Postalcode:
+                </th>
+                <th onclick="sortTable(6)">
+                    Event Type:
+                </th>
+                <th onclick="sortTable(7)">
+                    Event Traffic Cams:
+                </th>
+                <th>
+                    Event Forecast:
+                </th>
+                <th onclick="sortTable(8)">
+                    Event Date:
+                </th>
+                <th onclick="sortTable(9)">
+                    Event Duration:
+                </th>
+                <th>
+                    Update Your Event:
+                </th>
+                <th>
+                    Delete Your Event:
+                </th>
+                </tr>
+                {% for event in events %}
+                  <tr>
+                  <td>
+                      {{event.event_name}}
+                  </td>
+                  <td>
+                      {{event.event_street}}
+                  </td>
+        
+                  <td>
+                      {{ event.event_city }}
+                  </td>
+                  <td>
+                    <button type="button" class="event_state" value="{{ event.event_state }}">{{ event.event_state }}</button>
+                  </div>
+                  </td>
+                  <td>
+                      {{event.event_country}}
+                  </td>
+                  <td>
+                      {{event.event_postalcode}}
+                  </td>
+                  <td>
+                      {{event.event_type}}
+                      <!--
+                      {{ event.event_latitude }}
+                      {{ event.event_longitude }}
+                      -->
+                  </td>
+                  <td>
+                    <a href="/events/cameras/{{ event.id }}">
+                    <button type="button" class="btn btn-danger btn-sm">Cameras</button></a>
+                  </td>
+                  <td>
+                    <a href="/events/forecast/{{ event.id }}">
+                    <button type="button" class="btn btn-danger btn-sm">Forecast</button></a>
+                  </td>
+                  <td>
+                    {{ event.event_date }}
+                  </td>
+                  <td>
+                      {{ event.event_duration }}
+                </td>
+                <td>
+                    <a href="/events/update/{{ event.id }}">
+                      <button type="button" class="btn btn-danger btn-sm">Update</button></a>
+                    </td>
+                <td>
+                <a href="/events/delete/{{ event.id }}">
+                  <button type="button" class="btn btn-danger btn-sm">Delete</button></a>
+                </td>
+                </tr>                
+                {% endfor %}
+              </table> 
+            </div>
+        </div>       
+    </div>
+</div> 
+</div>
+<br>
+<script>
+    $(document).ready(function() {
+        $('table').SetEditable({
+        columnsEd: "0,1, 2, 3, 4, 5, 6, 7, 8, 9",
+        onEdit: function() {},
+        onDelete: function() {},
+        onBeforeDelete: function() {},
+        onAdd: function() {}
+    });
+});
+</script>
+<!--
+<div style="width:100%; height:500px">
+    {% if map %}
+        {{ map._repr_html_() | safe }}
+    {% endif %}
+</div>   
+-->
+
+<div class="column" style="right: 0">  
+    {% if df %}    
+        {{ df.to_html() | safe }}   
+    {% endif %}
+</div>
+<!--</div>-->
+<script>
+    function sortTable(n) {
+      var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+      table = document.getElementById("myTable");
+      switching = true;
+      dir = "asc"; 
+
+      while (switching) {
+        switching = false;
+        rows = table.rows;
+
+        for (i = 1; i < (rows.length - 1); i++) {
+          shouldSwitch = false;
+ 
+          x = rows[i].getElementsByTagName("TD")[n];
+          y = rows[i + 1].getElementsByTagName("TD")[n];
+          
+          if (dir == "asc") {
+            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+              shouldSwitch= true;
+              break;
+            }
+          } else if (dir == "desc") {
+            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+              shouldSwitch = true;
+              break;
+            }
+          }
+        }
+        if (shouldSwitch) {
+          rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+          switching = true;
+          switchcount ++;      
+        } else {
+          if (switchcount == 0 && dir == "asc") {
+            dir = "desc";
+            switching = true;
+          }
+        }
+      }
+    }
+</script>
+{% endblock %}

@@ -1,31 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-<div style="display: flex; justify-content: space-between;">
-    <form action="{{ url_for("profile_post")}}" method="post" id="latlongform">
-        <label for="user_latitude"></label>
-        <input type="hidden" 
-        id="user_latitude" 
-        name="browser_latitude" 
-        placeholder="Please wait..." 
-        required
-        value="{{ user_latitude }}">
-
-        <label for="user_longitude">
-        </label>
-        <input type="hidden" 
-        id="user_longitude" 
-        name="browser_longitude" 
-        placeholder="Please wait..." 
-        required 
-        value="{{ user_longitude }}">   
-             
-        <button type="submit" id="submit">Share Your Current Location</button>
-    </form>
-    <br>
-</div>
-
+<!-- Plotting the Optimal Route for Data Scientists in Python using the Dijkstra Algorithm -->
 <div style="width: 100vw; display: block">
     <div style="float: left; left: 0; width: 50%;">
         {% if df %}
@@ -59,8 +35,20 @@
             <div class="card" style="float: right; right: 10px; width: 40vw; height: 500px">
                 {{ map._repr_html_() | safe }}
 
-                {% if office_dict %}
+                {% if parent_office_dict %}
                 <ul style="font-size: 16px; list-style-type: none; float:left; left: 0;">
+                    {% for i in parent_office_dict %}
+                <li>{{ i['streetAddress'] }}</li>
+                <li>{{ i['addressLocality'] }} {{ i['addressRegion'] }} {{ i['postalCode'] }}</li>
+                    {% endfor %}
+                    <li>{{ parent_office_dict[-2] }}</li>
+                    <li>{{ parent_office_dict[-1] }}</li>
+                </ul>
+                {% endif %}
+
+
+                {% if office_dict %}
+                <ul style="font-size: 16px; list-style-type: none; float:right; right: 0;">
                     {% for i in office_dict %}
                 <li>{{ i['streetAddress'] }}</li>
                 <li>{{ i['addressLocality'] }} {{ i['addressRegion'] }} {{ i['postalCode'] }}</li>
@@ -74,13 +62,6 @@
         {% endif %}
     </div>
 </div>
-<!--
-{% if forecast_dict %}
-{% for key, value in forecast_dict.items() %}
-        <img src="{{ value['name']['icon'] }}" alt="{{value['name']}}_pic" />
-{% endfor %}
-{% endif %}
--->
 
 {% if day_dict %}
 <div class="forecast_tab">
@@ -91,13 +72,23 @@
   <div id="Day" class="forecast_tabcontent">
     <span onclick="this.parentElement.style.display='none'" class="closeTab">&times</span>
     <h3>DayTime</h3>
-        {{ day_dict['shortForecast']}}    
-        {{ day_dict['detailedForecast']}}
+    
+    <ul style="list-style-type: none;">
+    {% for key, value in day_dict.items() %}
+            <li><b>{{ value['name'] }}</b></li>
+            <ul style="list-style-type: none;">
+                <li>{{ value['detailedForecast'] }}</li>
+            </ul>
+            <br>
+    {% endfor %}
+    </ul>
 
     <div style="width: 100%; display: flex; flex: wrap; justify-content: space-evenly;">
         {% for key, value in day_dict.items() %}
         <div style="width: 10%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">       
-            {{ value['name'] }}
+            {% if value['name'] is defined %}
+                {{ value['name'] }}
+            {% endif %}
             <br>
             <div class="imgContainer">
                 <img style="opacity: 40%" src="{{value['icon']}}" alt="weather_pic" />
@@ -106,7 +97,12 @@
                 <br>
                 {{ value['windSpeed'] }} {{ value['windDirection'] }}
                 <br>
-                {{ value['probabilityOfPrecipitation']['value'] }} {{ value['probabilityOfPrecipitation']['unitCode'][1] }}
+                {% if value['probabilityOfPrecipitation']['value'] is defined %}
+                    {{ value['probabilityOfPrecipitation']['value'] }} 
+                {% endif %}
+                {% if value['probabilityOfPrecipitation'] is defined %}
+                    {{ value['probabilityOfPrecipitation']['unitCode'][1] }}
+                {% endif %}
                 <br>
                 {{ value['relativeHumidity']['value'] }} {{ value['relativeHumidity']['unitCode'][1] }} 
             </div> 
@@ -120,8 +116,16 @@
 <div id="Night" class="forecast_tabcontent">
     <span onclick="this.parentElement.style.display='none'" class="closeTab">&times</span>
     <h3>NightTime</h3>
-        {{ night_dict['shortForecast']}}    
-        {{ night_dict['detailedForecast']}}
+
+    <ul style="list-style-type: none;">
+        {% for key, value in night_dict.items() %}
+                <li><b>{{ value['name'] }}</b></li>
+                <ul style="list-style-type: none;">
+                    <li>{{ value['detailedForecast'] }}</li>
+                </ul>
+                <br>
+        {% endfor %}
+    </ul>
 
     <div style="width: 100%; display: flex; flex: wrap; justify-content: space-evenly;">
         {% for key, value in night_dict.items() %}
@@ -134,7 +138,12 @@
                 <br>
                 {{ value['windSpeed'] }} {{ value['windDirection'] }}
                 <br>
-                {{ value['probabilityOfPrecipitation']['value'] }} {{ value['probabilityOfPrecipitation']['unitCode'][1] }}
+                {% if value['probabilityOfPrecipitation']['value'] is defined %}
+                    {{ value['probabilityOfPrecipitation']['value'] }} 
+                {% endif %}
+                {% if value['probabilityOfPrecipitation'] is defined %}
+                    {{ value['probabilityOfPrecipitation']['unitCode'][1] }}
+                {% endif %}                
                 <br>
                 {{ value['relativeHumidity']['value'] }} {{ value['relativeHumidity']['unitCode'][1] }} 
             </div> 
@@ -160,5 +169,6 @@
     }
     
     document.getElementById("defaultTab").click();
-    </script>
+</script>
+
 {% endblock %}

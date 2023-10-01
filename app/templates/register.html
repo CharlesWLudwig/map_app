@@ -6,28 +6,32 @@
         <form action="" method="POST">
         {{ form.hidden_tag() }}
         <p>
-            {{ form.username.label }}<br>
+            <div class="hoverWarning">{{ form.username.label }}</div>
+            <div class="hide">Please enter your username</div>
             {{ form.username(size=32) }}<br>
             {% for error in form.username.errors %}
             <span class="error">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
-            {{ form.email.label }}<br>
+            <div class="hoverWarning">{{ form.email.label }}</div>
+            <div class="hide">Please enter your email address</div>
             {{ form.email(size=64) }}<br>
             {% for error in form.email.errors %}
             <span class="error">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
-            {{ form.password.label }}<br>
+            <div class="hoverWarning">{{ form.password.label }}</div>
+            <div class="hide">Please enter your password</div>
             {{ form.password(size=32) }}<br>
             {% for error in form.password.errors %}
             <span class="error">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
-            {{ form.password_verify.label }}<br>
+            <div class="hoverWarning">{{ form.password_verify.label }}</div>
+            <div class="hide">Please verify your password</div>
             {{ form.password_verify(size=32) }}<br>
             {% for error in form.password_verify.errors %}
             <span class="error">[{{ error }}]</span>

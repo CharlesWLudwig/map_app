@@ -1,19 +1,17 @@
-from configparser import ConfigParser
 import os
 
-BASEDIR = os.path.abspath(os.path.dirname(__file__))
+basedir = os.path.abspath(os.path.dirname(__file__))
 
-class ConfigClass(object):
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'there-is-no-key'
-
-    LANGUAGES = ['en', 'fr']
+class Config(object):
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(BASEDIR, 'trafficapp.db')
-
+        'sqlite:///' + os.path.join(basedir, 'app.db')
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # This is for online db (if you have a file for the connection string - .ini)
+"""
 def config_db(filename='database.ini', section='postgresql'):
     # create a parser
     parser = ConfigParser()
@@ -30,3 +28,4 @@ def config_db(filename='database.ini', section='postgresql'):
         pass
     
     return db
+"""

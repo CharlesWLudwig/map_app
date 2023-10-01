@@ -1,72 +1,78 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
-from pprint import pprint
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-import asyncio
-import time
-import requests
-from .forms import LoginForm, RegistrationForm
-from flask_login import current_user, login_user, logout_user, login_required
-from werkzeug.urls import url_parse
+from flask import render_template, flash, redirect, url_for, request, jsonify
+import os
+import pandas as pd
+from datetime import datetime
+from app import app, db
+from app.forms import EventForm, UpdateForm, RegistrationForm, LoginForm
 import folium
+import requests
+from flask_login import current_user, logout_user, login_user, login_required
+from app.models import User
+import json
 from folium import plugins
 from folium.elements import *
-from datetime import datetime
-import pandas as pd
-from .config import ConfigClass
-import json
-from .models import User
-from .functions import creatingFoliumMap, getBrowserLocation, getWeatherForecast
-from app import app, db
+from werkzeug.urls import url_parse
 
-@app.route('/home')
-@login_required
+@app.before_request
+def before_request():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        db.session.commit()
+
+from app.forms import EventForm, UpdateForm
+from app.models import Event, User
+
+def getLatLon(street, city, state, postalcode, country):
+    url = f'https://geocode.maps.co/search?street={street}&city={city}&state={state}&postalcode={postalcode}&country={country}'
+
+    print(url)
+
+    response = requests.get(url=url)
+
+    if response.status_code == 200:
+        data = response.json()
+        data_dict = {}
+       
+        for i in data:
+            data_dict['lat'] = i['lat']
+            data_dict['lon'] = i['lon']
+            data_dict['display_name'] = i['display_name']
+           
+        latitude = data_dict.get('lat', 0)                
+        longitude = data_dict.get('lon', 0)
+        """
+        display_name = data_dict.get('display_name', 0)
+        km = distance([float(latitude), float(longitude)])
+        miles = distance([float(latitude), float(longitude)]).miles"""
+        print(latitude, longitude)
+        
+        return latitude, longitude
+
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
 def home():
-    # For the logged in user
-    posts = []
-
-    return render_template('landingpage.html', title='Home', posts=posts)
-
-@app.route('/')
-@app.route('/index')
-def index():
-    # For public access
-    """
-    getStateAlerts
-    """       
-    map = folium.Map(location=[0, 0], zoom_start=2)
-    
-    folium.TileLayer('stamenterrain').add_to(map)
-    folium.TileLayer('stamentoner').add_to(map)
-    folium.TileLayer('stamenwatercolor').add_to(map)
-    folium.TileLayer('cartodbpositron').add_to(map)
-    folium.TileLayer('openstreetmap').add_to(map)
-
-    folium.LayerControl().add_to(map)
-
-    minimap = plugins.MiniMap()
-    map.add_child(minimap)
-    
-    return render_template('landingpage.html', map=map)
+    return render_template("home.html")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('profile_get'))
+        return redirect(url_for('get_events'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Username or password not found')
             return redirect(url_for('login'))
+
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('profile_get')
+            next_page = url_for('get_events')
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
 
 @app.route('/logout')
+@login_required
 def logout():
     logout_user()
     return redirect(url_for('home'))
@@ -74,7 +80,7 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('home'))
+        return redirect(url_for('get_events'))
     form = RegistrationForm()
     if form.validate_on_submit():
         prospective_user = User(username=form.username.data, email=form.email.data)
@@ -103,223 +109,422 @@ def register():
     
     return render_template('register.html', title='Register', form=form)
 
-@app.route('/profile', methods=["GET"])
+@app.route('/events')
 @login_required
-def profile_get():
-    user = "user"
+def get_events():
+    if current_user.is_authenticated:       
+        form = EventForm()
 
-    # Plotting data from dataframes (main cities example) 
-    countries_url = 'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
-    response = requests.get(countries_url)
-    data = response.json()
+        """
+        user_id = User.query.filter_by(username = current_user).first()
 
-    map = folium.Map(location=[0, 0], zoom_start=2)
-
-    folium.GeoJson(data).add_to(map)
-           
-    minimap = plugins.MiniMap()
-    map.add_child(minimap)
-
-    return render_template("profile.html", map = map, user=user)   
-
-@app.route('/profile', methods = ["POST"])
-@login_required
-def profile_post():
-    user = "user"
-
-    if request.method == "POST":      
-       browser_latitude = request.form.get("browser_latitude")
-       browser_longitude = request.form.get("browser_longitude")
-
-       """
-       geocode_data = getBrowserLocation(browser_latitude=browser_latitude, 
-       browser_longitude=browser_longitude)
-           
-       df = pd.DataFrame(geocode_data)
-       """
-       # print(df)
-       """
-       try: 
-            ###############################
-            df = df[[
-                'street',
-                'adminArea5',
-                'adminArea4',
-                'adminArea3',
-                'adminArea1',
-                'postalCode',
-                ]].copy()
-            
-            df.rename(columns={
-                'street': 'Street', 
-                'adminArea5': 'City',
-                'adminArea4': 'County',
-                'adminArea3': 'State',
-                'adminArea1': 'Country',
-                'postalCode': 'Zip Code'
-                }, inplace=True)
-                ###############################
-       except Exception as e:
-           print(e)
-
-       """
-       # Starting to add road conditions
-       reply, points = creatingFoliumMap(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
-
-       weather_dict, forecast_dict = getWeatherForecast(browser_latitude=browser_latitude, browser_longitude=browser_longitude)
-
-       day_dict = {}
-       night_dict = {}
+        events = Event.query.filter_by(users_events=user_id).first()
         
-       for key, value in forecast_dict.items():
-#          print(key)
+        events = Event.query.filter_by(users_events=current_user.username).all()
+        """
+        events = current_user.events.all()
+#        events = Event.query.filter_by(users_events=current_user.username).first()
 
-           if 'Night' in key:
-               night_dict[key] = value
-           elif 'night' in key:
-               night_dict[key] = value
-           else:
-               day_dict[key] = value
-       """"
-       for key in day_dict.keys():
-           print(key)
+#        events = User.query.filter_by(events=current_user.id).all()
 
-       for key in night_dict.keys():
-           print(key)
-       """
-       
-       """
-       print(f"GridX: {weather_dict['gridX']}")
-       print(f"GridY: {weather_dict['gridY']}")         
-       print(f"fireWeatherZone: {weather_dict['fireWeatherZone']}")
-       print(f"ForecastOffice: {weather_dict['forecastOffice']}")
-       print(f"County: {weather_dict['county']}")
-       print(f"Forecast: {weather_dict['forecast']}")
-       print(f"ForecastZone: {weather_dict['forecastZone']}")
-       print(f"Observation Station: {weather_dict['observationStations']}")
-       print(f"Forecast Hourly: {weather_dict['forecastHourly']}")
-       print(f"Forecast Grid Data: {weather_dict['forecastGridData']}")
-       print(f"TimeZone: {weather_dict['timeZone']}")
-       print(f"Radar Station: {weather_dict['radarStation']}")
-       print(f"City: {weather_dict['relativeLocation']['properties']['city']}")
-       print(f"State: {weather_dict['relativeLocation']['properties']['state']}")
-       print(f"Distance: {weather_dict['relativeLocation']['properties']['distance']}")
-       print(f"Bearing: {weather_dict['relativeLocation']['properties']['bearing']}")
-       """
-       
-       map = folium.Map(location=[browser_latitude, browser_longitude], zoom_start=6)
+        print(events)
+        
+        if events is None:
+            df = pd.DataFrame(
+                columns=[
+                    'name', 
+                    'street',
+                    'city', 
+                    'state',
+                    'country', 
+                    'type',
+                    'postalcode', 
+                    'duration',
+                ]
+            )
+            
+            df['latitude'] = ''
+            df['longitude'] = ''
 
-       folium.GeoJson(
-           weather_dict['fireWeatherZone'],
-           name='Fire Zones'
+        else: 
+            df = pd.DataFrame(
+                [(
+                    e.event_name,
+                    e.event_street,
+                    e.event_city,
+                    e.event_state,
+                    e.event_country,
+                    e.event_type, 
+                    e.event_postalcode, 
+                    e.event_latitude, 
+                    e.event_longitude,
+                    e.event_duration
+                    ) 
+                    for e in events
+                ], 
+                columns=[
+                    'name', 
+                    'street',
+                    'city', 
+                    'state',
+                    'country', 
+                    'type',
+                    'postalcode',
+                    'latitude',
+                    'longitude',
+                    'duration',
+                ]
+            )
+            
+        df_coords = []
+
+        map = folium.Map(location=[0, 0], tiles="OpenStreetMap", zoom_start=3)
+
+        # map = folium.Map(location=[df.iloc[0]['latitude'], df.iloc[0]['longitude']], tiles="OpenStreetMap", zoom_start=3)
+
+        for i in range(0,len(df)):
+        # https://api.weather.gov/alerts/active?area={state}
+
+            df_coords.append([df.iloc[i]['latitude'], df.iloc[i]['longitude']])
+
+            folium.Marker(
+            location=[df.iloc[i]['latitude'], df.iloc[i]['longitude']],
+            popup=df.iloc[i]['name'],
+            ).add_to(map)
+
+            """
+            ox.config(log_console=True, use_cache=True)
+
+            G_walk = ox.graph_from_place('', network_type='walk')
+
+            orig_node = ox.nearest_nodes(G_walk, df.iloc[i]['latitude'], df.iloc[i]['longitude'])
+            dest_node = ox.nearest_nodes(G_walk,  df.iloc[i+1]['latitude'], df.iloc[i+1]['longitude'])
+
+                    
+            my_dist = distance.geodesic(orig_node, dest_node)
+            
+            print(my_dist)
+            import networkx as nx
+            route = nx.shortest_path(G_walk,
+                                    orig_node,
+                                    dest_node,
+                                    weight='length')
+        
+            ox.plot_route_folium(G_walk, my_dist, popup_attribute='length')
+            """
+
+        if not df.empty:
+            # random coordinates
+            coords = [[[42.3554025, -71.0728116], [42.3554142, -71.0728438]],
+    [[42.3554142, -71.0728438], [42.3554296, -71.0728738]]]
+            
+            fg = folium.FeatureGroup("Lines")
+            folium.PolyLine(coords).add_to(fg)
+            fg.add_to(map)
+            folium.LayerControl(position='bottomright').add_to(map)
+
+            return render_template("event.html", events=events, form = form, map=map, user = current_user)
+        else:
+            return render_template("event.html", events=events, form = form, map = map, user = current_user)
+    else:
+        return redirect(url_for('login'))  
+
+@app.route("/events/create", methods=["POST"])
+@login_required
+def create():
+    if current_user.is_authenticated:
+        
+        form = EventForm()
+
+        user = User.query.filter_by(username=current_user.username).first_or_404()
+
+        events = user.events.all()
+
+        if form.validate_on_submit():
+            # get all events
+#            event = Event.query.filter_by(users_events = current_user.id).all()
+            event = Event.query.filter_by(event_name=form.event_name.data).first()
+
+            # If the event_name is not in a users' events obj list
+            if event not in events:   
+                function_latitude, function_longitude = getLatLon(
+                    street = form.event_street.data,
+                    city = form.event_city.data,
+                    state = form.event_state.data,
+                    country = form.event_country.data,
+                    postalcode = form.event_postalcode.data,
+                )
+
+                event = Event(
+                    event_name = form.event_name.data, 
+                    event_street = form.event_street.data,
+                    event_city = form.event_city.data,
+                    event_state = form.event_state.data,
+                    event_country = form.event_country.data,
+                    event_type = form.event_type.data,
+                    event_date = form.event_date.data.strftime('%Y-%m-%d'),
+                    event_postalcode = form.event_postalcode.data,
+                    event_latitude = function_latitude, 
+                    event_longitude = function_longitude, 
+                    event_duration = form.event_duration.data,
+                    scheduler=current_user
+                )
+
+                db.session.add(event)
+                db.session.commit()
+    else:
+        pass
+
+    return redirect(url_for('get_events'))
+    
+@app.route("/events/update/<int:id>")
+@login_required
+def update(id):
+    if current_user.is_authenticated:
+            e = Event.query.filter_by(id=id).first()
+
+            print(e.id)
+            print(e.event_name)
+            print(e.event_street)
+            print(e.event_city)
+            print(e.event_state)
+            print(e.event_country)
+            print(e.event_type)
+            print(e.event_date)
+            print(e.event_postalcode)
+            print(e.event_latitude)
+            print(e.event_longitude)
+            print(e.event_duration)
+
+            db.session.commit()
+    else:
+        pass
+    return redirect(url_for("get_events"))
+    
+@app.route("/events/cameras/<int:id>")
+@login_required
+def cameras(id):
+    if current_user.is_authenticated:
+        event = Event.query.filter_by(id=id).first()      
+        traffic_key = os.getenv('TRAFFIC_KEY')
+
+        latitude = event.event_latitude
+        longitude = event.event_longitude
+
+        return render_template("traffic.html", event_latitude = latitude, event_longitude = longitude, traffic_key = traffic_key)
+
+@app.route("/events/forecast/<int:id>")
+@login_required
+def forecast(id):
+    if current_user.is_authenticated:
+        event = Event.query.filter_by(id=id).first()
+        
+        """
+        NOAA
+        forecast - forecast for 12h periods over the next seven days
+        forecastHourly - forecast for hourly periods over the next seven days
+        forecastGridData - raw forecast data over the next seven days
+        """
+        latitude = event.event_latitude
+        longitude = event.event_longitude
+
+        weather_url = f"https://api.weather.gov/points/{latitude},{longitude}"
+
+        response = requests.get(weather_url)
+
+        if response.status_code == 200:
+            weather_resp = response.json()
+            weather_dict = {}
+
+        for i in weather_resp['properties']:
+            weather_dict[i] = weather_resp['properties'][i]
+
+        future_url = weather_dict['forecast']
+
+        response = requests.get(future_url)
+        if response.status_code == 200:
+            daily_dict = {}
+
+            future_data = response.json()
+
+        for i in future_data['properties']:
+            daily_dict[i] = future_data['properties'][i]
+        
+        forecast_dict = {}
+
+        for i in daily_dict['periods']:
+            forecast_dict[f"{i['name']}"] = i
+
+        print("WEATHER DICT")
+        print(weather_dict)
+
+        print("FORECAST DICT")
+        print(forecast_dict)
+   
+        day_dict = {}
+        night_dict = {}
+        
+        for key, value in forecast_dict.items():
+            if 'Night' in key:
+                night_dict[key] = value
+            elif 'night' in key:
+                night_dict[key] = value
+            else:
+                day_dict[key] = value
+        """"
+        for key in day_dict.keys():
+            print(key)
+
+        for key in night_dict.keys():
+            print(key)
+        """
+        """
+        print(f"GridX: {weather_dict['gridX']}")
+        print(f"GridY: {weather_dict['gridY']}")         
+        print(f"fireWeatherZone: {weather_dict['fireWeatherZone']}")
+        print(f"ForecastOffice: {weather_dict['forecastOffice']}")
+        print(f"County: {weather_dict['county']}")
+        print(f"Forecast: {weather_dict['forecast']}")
+        print(f"ForecastZone: {weather_dict['forecastZone']}")
+        print(f"Forecast Hourly: {weather_dict['forecastHourly']}")
+        print(f"Forecast Grid Data: {weather_dict['forecastGridData']}")
+        print(f"TimeZone: {weather_dict['timeZone']}")
+        print(f"City: {weather_dict['relativeLocation']['properties']['city']}")
+        print(f"State: {weather_dict['relativeLocation']['properties']['state']}")
+        print(f"Distance: {weather_dict['relativeLocation']['properties']['distance']}")
+        print(f"Bearing: {weather_dict['relativeLocation']['properties']['bearing']}")
+        print(f"Observation Station: {weather_dict['observationStations']}")
+        print(f"Radar Station: {weather_dict['radarStation']}")
+        """       
+
+        map = folium.Map(location=[latitude, longitude], zoom_start=6)
+
+        folium.GeoJson(
+            weather_dict['fireWeatherZone'],
+            name='Fire Zones'
         ).add_to(map)
 
-       folium.GeoJson(
-           weather_dict['county'], 
-           name='county'
+        folium.GeoJson(
+            weather_dict['county'], 
+            name='county'
         ).add_to(map)
 
-       folium.GeoJson(
-           weather_dict['observationStations'],
-           marker = folium.CircleMarker(
-               radius = 8,
-               weight = 5,
-               fill_color = 'yellow', 
-               fill_opacity = 1),
-               tooltip = folium.GeoJsonTooltip(fields = ['stationIdentifier'],                                  aliases=['Station: '],
-         sticky = True),
-         name='Observation Stations'
-         ).add_to(map)     
+        """
+        weather_dict_2 = requests.get(f"{weather_dict['observationStations']}")
+        if weather_dict_2.status_code == 200: 
+            weather_dict_2 = weather_dict_2.json()
 
-       folium.GeoJson(
-           weather_dict['forecastZone'], 
-           name='Forecast Zone'
+        for key, value in weather_dict.items():
+            if key == 'observationStations':
+                print(value)
+        
+        stations_list = []
+
+        for key, value in weather_dict_2.items():
+            if key == 'observationStations':
+                stations_list.append(value)
+            
+                station_url = {}
+                for i in stations_list:
+                    station_url['station'] = i
+        """
+        for key, value in weather_dict.items():
+            print(key, value)
+
+            # print(i["observationStations"]["features"]i["properties"]["@id"][-4:])
+
+        folium.GeoJson(
+            weather_dict['observationStations'],
+            marker = folium.CircleMarker(
+            radius = 8,
+            weight = 5,
+            fill_color = 'yellow', 
+            fill_opacity = 1),
+            tooltip = folium.GeoJsonTooltip(fields = [
+                'stationIdentifier', 
+                'name',
+                ],              
+            aliases=[
+                'Station: ', 
+                'Location: ',
+                ],
+            # popup = f'<b>{weather_dict["observationStations"]["@id"][-4:]}</b>',
+            sticky = True),
+            name='Observation Stations'
+            ).add_to(map)     
+
+        folium.GeoJson(
+            weather_dict['forecastZone'], 
+            name='Forecast Zone'
         ).add_to(map)
 
-       folium.Marker(
-           [browser_latitude, browser_longitude], 
-           name='My Location', 
-           popup="<i>My Location</i>"
+        folium.Marker(
+            [latitude, longitude], 
+            name='My Location', 
+            popup="<i>My Location</i>"
         ).add_to(map)
 
-#       forecastOfficeAddress = weather_dict["forecastZone"]["properties"]["forecastOffices"][0]
-       # Getting the Forecasting Office 
-       forecast_office_url = f"{weather_dict['forecastOffice']}"
+    #       forecastOfficeAddress = weather_dict["forecastZone"]["properties"]["forecastOffices"][0]
+        # Getting the Forecasting Office 
+        forecast_office_url = f"{weather_dict['forecastOffice']}"
 
-       response = requests.get(forecast_office_url)
+        print("\nFORECASTING OFFICE")
+        print(f"{weather_dict['forecastOffice']}")
 
-       if response.status_code == 200:
-           forecastOfficeAddress = response.json()
+        response = requests.get(forecast_office_url)
 
-           print(f"Forecast Office Address: {forecastOfficeAddress['address']}")
-           print(f"Forecast Office Address: {forecastOfficeAddress['telephone']}")
-           print(f"Forecast Office Address: {forecastOfficeAddress['email']}")
+        if response.status_code == 200:
+            forecastOfficeAddress = response.json()
 
-       forecasting_office_dict = [
-           forecastOfficeAddress['address'], forecastOfficeAddress['telephone'], forecastOfficeAddress['email']
+            print(f"Forecast Office Address: {forecastOfficeAddress['address']}")
+            
+            print(f"Forecast Office Address: {forecastOfficeAddress['telephone']}")
+            
+            print(f"Forecast Office Address: {forecastOfficeAddress['email']}")
+
+            print(f"Approved Office Stations: {forecastOfficeAddress['approvedObservationStations']}")
+
+            print(forecastOfficeAddress['approvedObservationStations'])
+
+            response = requests.get(forecastOfficeAddress['parentOrganization'])
+
+            if response.status_code == 200:
+                parentOfficeAddress = response.json()            
+
+                parent_office_dict = [
+                    parentOfficeAddress['address'], parentOfficeAddress['telephone'], parentOfficeAddress['email']
+                ]
+
+        forecasting_office_dict = [
+            forecastOfficeAddress['address'], forecastOfficeAddress['telephone'], forecastOfficeAddress['email']
         ]
 
-       folium.CircleMarker(location=([browser_latitude, browser_longitude]),radius=50, fill_color='red', popup=f'{forecastOfficeAddress}').add_to(map)
+        folium.CircleMarker(location=([latitude, longitude]),radius=50, fill_color='red', #popup=f'https://forecast.weather.gov/data/obhistory/{[forecastOfficeAddress["approvedObservationStations"]]}.html'
+        ).add_to(map)
 
-       folium.LayerControl(collapsed=False).add_to(map)
+        folium.LayerControl(collapsed=False).add_to(map)
         
-       minimap = plugins.MiniMap()
-       map.add_child(minimap)
+        minimap = plugins.MiniMap()
+        map.add_child(minimap)
 
-#       nearby_state_alerts = getStateAlerts(state=weather_dict['relativeLocation']['properties']['state'])
+        """        
+        nearby_state_alerts = getStateAlerts(state=weather_dict['relativeLocation']['properties']['state'])
 
-#      print(nearby_state_alerts)
-       
-       return render_template("profile.html", map = map, browser_latitude = browser_latitude, browser_longitude = browser_longitude, reply = reply, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, user=user, office_dict = forecasting_office_dict)   
+                print(nearby_state_alerts)
+        """
 
-    return redirect(url_for('profile_get')) 
-
-"""
-@app.route('/baseline')
-def baseline():
-    return "landingpage.html"
-
-@app.route("/api/country", methods=["GET"])
-def get_all_countries():
-    if connection_records:
-        result = []      
-        for record in connection_records:
-            print(record)
-
-        return jsonify(connection_records)
-    
-        for record in connection_records:
-            print(record)
-            result.append({
-                'country': record[0],
-                'latitude': record[1],
-                'longitude': record[2],
-                'name': record[3]})        
-        return jsonify(result)
+        return render_template("weather.html", map = map, browser_latitude = latitude, browser_longitude =  longitude, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, user = current_user, office_dict = forecasting_office_dict, parent_office_dict = parent_office_dict)   
     else:
-        return jsonify({"error": f"country not found."}), 404       
-"""
-"""       
-       json_df = pd.read_json(f"{weather_dict['fireWeatherZone']}")   
-       json_result = json_df.to_json(orient='records')
-       parsed = json.loads(json_result)
-       json_out = json.dumps(parsed, indent=4)
+        pass
+    return redirect(url_for("get_events"))
 
-       with open('fire_data.geojson', 'w') as outfile:
-            outfile.write(json_out)
-"""
-"""
-# Plotting data from dataframes
-data = pd.DataFrame({
-    'lon':[-58, 2, 145, 30.32, -4.03, -73.57, 36.82, -38.5],
-    'lat':[-34, 49, -38, 59.93, 5.33, 45.52, -1.29, -12.97],
-    'name':['Buenos Aires', 'Paris', 'melbourne', 'St Petersbourg', 'Abidjan', 'Montreal', 'Nairobi', 'Salvador'],
-    'value':[10, 12, 40, 70, 23, 43, 100, 43]
-}, dtype=str)
-
-for i in range(0,len(data)):
-    folium.Marker(
-        location=[data.iloc[i]['lat'], data.iloc[i]['lon']],
-        popup=data.iloc[i]['name'],
-    ).add_to(map)
-"""
+@app.route("/events/delete/<int:id>")
+@login_required
+def delete(id):
+    if current_user.is_authenticated:
+        event = Event.query.filter_by(id=id).first()
+        db.session.delete(event)
+        db.session.commit()
+    else:
+        pass
+    return redirect(url_for("get_events"))

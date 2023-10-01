@@ -8,10 +8,12 @@ Gunicorn
 geojson
 shapely
 flask-wtf
-flask-forms
+flask-form
 flask-login
 flask-sqlalchemy
 flask-migrate
 flask-babel
 email-validator
 asyncio
+geopy
+sklearn
