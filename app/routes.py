@@ -4,7 +4,7 @@ import pandas as pd
 from pprint import pprint
 from datetime import datetime
 from app import app, db
-from app.forms import EventForm, UpdateForm, RegistrationForm, LoginForm
+from app.forms import EventForm, RegistrationForm, LoginForm
 import folium
 import requests
 from flask_login import current_user, logout_user, login_user, login_required
@@ -20,7 +20,6 @@ def before_request():
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
 
-from app.forms import EventForm, UpdateForm
 from app.models import Event, User
 
 def getLatLon(street, city, state, postalcode, country):
@@ -108,25 +107,13 @@ def register():
     
     return render_template('register.html', title='Register', form=form)
 
-@app.route('/events')
+@app.route('/events', methods=['GET'])
 @login_required
 def get_events():
     if current_user.is_authenticated:       
         form = EventForm()
         
-        """
-        user_id = User.query.filter_by(username = current_user).first()
-
-        events = Event.query.filter_by(users_events=user_id).first()
-        
-        events = Event.query.filter_by(users_events=current_user.username).all()
-        """
         events = current_user.events.all()
-#        events = Event.query.filter_by(users_events=current_user.username).first()
-
-#        events = User.query.filter_by(events=current_user.id).all()
-
-#       print(events)
         
         if events is None:
             df = pd.DataFrame(
@@ -182,22 +169,26 @@ def get_events():
     else:
         return redirect(url_for('login'))  
 
-@app.route("/events/create", methods=["POST"])
+@app.route('/events/create', methods=['POST'])
 @login_required
 def create():
-    if current_user.is_authenticated:       
-        form = EventForm()
+    form = EventForm()
+    global value
 
-        user = User.query.filter_by(username=current_user.username).first_or_404()
+    if form.validate_on_submit():
+        print(f"Starting data Value : {form.adding.data}")
+        print(f"Ending data Value : {form.updating.data}")
 
-        events = user.events.all()
+        flash(
+            f"You submitted name {form.event_name.data} via button {'Adding' if form.adding.data else 'Updating'}")
+           
+        if form.adding.data:
 
-        if form.validate_on_submit():
-            # get all events
-#            event = Event.query.filter_by(users_events = current_user.id).all()
+            user = User.query.filter_by(username=current_user.username).first_or_404()
+            events = user.events.all()
+            
             event = Event.query.filter_by(event_name=form.event_name.data).first()
 
-            # If the event_name is not in a users' events obj list
             if event not in events:   
                 function_latitude, function_longitude = getLatLon(
                     street = form.event_street.data,
@@ -224,25 +215,16 @@ def create():
 
                 db.session.add(event)
                 db.session.commit()
-    else:
-        pass
+            else:
+                pass
+        
+            return redirect(url_for('get_events'))
+        
+        elif form.updating.data:
+            user = User.query.filter_by(username=current_user.username).first_or_404()
+            
+            events = user.events.all()
 
-    return redirect(url_for('get_events'))
-
-@app.route("/events/update", methods=['POST'])
-@login_required
-def update():
-    if current_user.is_authenticated:
-
-        form = EventForm()
-
-        user = User.query.filter_by(username=current_user.username).first_or_404()
-
-        events = user.events.all()
-
-        if form.validate_on_submit():
-            # get all events
-#            event = Event.query.filter_by(users_events = current_user.id).all()
             event = Event.query.filter_by(event_name=form.event_name.data).first()
 
             if event in events:   
@@ -254,26 +236,32 @@ def update():
                     postalcode = form.event_postalcode.data,
                 )
 
-                event = Event(
-                    event_name = form.event_name.data, 
-                    event_street = form.event_street.data,
-                    event_city = form.event_city.data,
-                    event_state = form.event_state.data,
-                    event_country = form.event_country.data,
-                    event_type = form.event_type.data,
-                    event_date = form.event_date.data.strftime('%Y-%m-%d'),
-                    event_postalcode = form.event_postalcode.data,
-                    event_latitude = function_latitude, 
-                    event_longitude = function_longitude, 
-                    event_duration = form.event_duration.data,   
-                    scheduler = current_user
-                )
+                event.event_name = form.event_name.data 
+                event.event_street = form.event_street.data
+                event.event_city = form.event_city.data
+                event.event_state = form.event_state.data
+                event.event_country = form.event_country.data
+                event.event_type = form.event_type.data
+                event.event_date = form.event_date.data.strftime('%Y-%m-%d')
+                event.event_postalcode = form.event_postalcode.data
+                event.event_latitude = function_latitude 
+                event.event_longitude = function_longitude 
+                event.event_duration = form.event_duration.data   
+                event.scheduler = current_user
 
             db.session.commit()
-    else:
-        pass
-    return redirect(url_for("get_events"))
-    
+
+            return redirect(url_for('get_events'))
+
+        else:
+            pass
+
+    if form.errors:
+        for error_field, error_message in form.errors.iteritems():
+            flash(f"Field : {error_field}; error : {error_message}")
+
+    return redirect(url_for('get_events'))
+
 @app.route("/events/cameras/<int:id>")
 @login_required
 def cameras(id):

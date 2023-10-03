@@ -10,7 +10,7 @@
           <h2>Road Trip Events</h2>
           
           <div class="eventsForm">
-            <form action="/events/create" method="POST" novalidate>
+            <form action="{{ url_for('create') }}" method="POST" novalidate>
             {{ form.hidden_tag() }}
             {{ form.csrf_token }}
             <p>
@@ -77,7 +77,8 @@
                 {% endfor %}
             </p>
             <div style="display: flex; flex-direction: row;">
-                <p>{{ form.submit() }}</p> 
+                {{ form.adding }}
+                {{ form.updating }}        
             </div>    
         </form>
     </div>
@@ -99,6 +100,9 @@
                 <th onclick="sortTable(2)">
                     Event City:
                 </th>
+                <th onclick="sortTable(3)">
+                    Event State:
+                </th>
                 <th onclick="sortTable(4)">
                     Event Country:
                 </th>
@@ -108,21 +112,18 @@
                 <th onclick="sortTable(6)">
                     Event Type:
                 </th>
-                <th onclick="sortTable(7)">
+                <th>
                     Event Traffic Cams:
                 </th>
                 <th>
                     Event Forecast:
                 </th>
-                <th onclick="sortTable(8)">
+                <th onclick="sortTable(7)">
                     Event Date:
                 </th>
-                <th onclick="sortTable(9)">
+                <th onclick="sortTable(8)">
                     Event Duration:
                 </th> 
-                <th>
-                    Update Your Event:
-                </th>
                 <th>
                     Delete Your Event:
                 </th>
@@ -136,11 +137,13 @@
                   </td>
                   <td>
                       {{event.event_street}}
-                  </td>
-        
+                  </td>       
                   <td>
                       {{ event.event_city }}
                   </td>
+                  <td>
+                    {{ event.event_state }}
+                </td>
                   <td>
                       {{event.event_country}}
                   </td>
@@ -168,10 +171,6 @@
                   <td>
                       {{ event.event_duration }}
                 </td> 
-                <td>
-                    <a href="/events/update/{{ event.id }}">
-                      <button type="button" class="btn btn-danger btn-sm">Update</button></a>
-                    </td>
                 <td>
                 <a href="/events/delete/{{ event.id }}">
                   <button type="button" class="btn btn-danger btn-sm">Delete</button></a>

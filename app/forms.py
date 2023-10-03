@@ -53,29 +53,6 @@ class EventForm(FlaskForm):
 
     event_duration = StringField('Event Duration', validators=[DataRequired()]) 
 
-    submit = SubmitField('Add Event')
-    
-class UpdateForm(FlaskForm):
-    event_name = StringField('Event Name', validators=[DataRequired()])
+    adding = SubmitField(label = 'Add Event')
 
-    event_street = StringField('Event Street', validators=[DataRequired()])
-        
-    event_city = StringField('Event City', validators=[DataRequired()])
-    
-    event_state = StringField('Event State', validators=[DataRequired()])
-   
-    event_country = SelectField(
-        u'Event Country',
-        choices = [('Canada', 'Canada'), ('United States', 'United States')],
-        validators=[InputRequired()]
-    )
-
-    event_postalcode = StringField('Event Postal Code', validators=[DataRequired()])   
-
-    event_type = StringField('Event Type', validators=[DataRequired()])  
-
-    event_date = DateField('Event Date', format='%Y-%m-%d')
-
-    event_duration = StringField('Event Duration', validators=[DataRequired()]) 
-
-    submit = SubmitField('Update Event')
+    updating = SubmitField(label = 'Update Event')

@@ -46,7 +46,9 @@
                 <ul style="font-size: 16px; list-style-type: none; float:left; left: 0;">
                     {% for i in parent_office_dict %}
                 <li>{{ i['streetAddress'] }}</li>
-                <li>{{ i['addressLocality'] }} {{ i['addressRegion'] }} {{ i['postalCode'] }}</li>
+                <li>{{ i['addressLocality'] }}</li>
+                <li>{{ i['addressRegion'] }}</li>
+                <li>{{ i['postalCode'] }}</li>
                     {% endfor %}
                     <li>{{ parent_office_dict[-2] }}</li>
                     <li>{{ parent_office_dict[-1] }}</li>
@@ -58,7 +60,8 @@
                 <ul style="font-size: 16px; list-style-type: none; float:right; right: 0;">
                     {% for i in office_dict %}
                 <li>{{ i['streetAddress'] }}</li>
-                <li>{{ i['addressLocality'] }} {{ i['addressRegion'] }} {{ i['postalCode'] }}</li>
+                <li>{{ i['addressLocality'] }}</li>
+                <li>{{ i['addressRegion'] }}</li> <li>{{ i['postalCode'] }}</li>
                     {% endfor %}
                     <li>{{ office_dict[-2] }}</li>
                     <li>{{ office_dict[-1] }}</li>
