@@ -2,61 +2,45 @@
 
 {% block content %}
 
-<h2 style="text-align: center;">Nearby Cameras</h2>
-<div id="cams_area">
+<div style="text-align: center;">
+  <h2>Cameras near {{ event_name }}</h2>
+  <h3>Go to {{ event_name }}'s <a href="/events/forecast/{{ event_id }}">Forecast</a></h3>
+  <h5>Go back to <a href="/events">All Events</a></h5>
 </div>
 
-<script type="text/javascript">   
+<div id="cams_area" style="background-color: whitesmoke; color: black">
+</div>
+
+<script>
 const KEY = {{ traffic_key | tojson }};
 const DIST = 50;
 const event_latitude = {{ event_latitude }}
 const event_longitude = {{ event_longitude }}
 
-async function getLiveCams(
-    lat,
-    lng,
-    dist,
-    key) {
-  const url = `https://api.windy.com/api/webcams/v2/list/limit=50/nearby=${lat},${lng},${dist}?key=${key}&show=webcams:location,image,url`;
-  let resp = await fetch(url);
+$.ajax({
+  url: `https://api.windy.com/api/webcams/v2/list/limit=50/nearby=${event_latitude},${event_longitude},${DIST}?key=${KEY}&show=webcams:location,image,url`,
+  type: "GET",
+  success: function(response) {
+    console.log("success", response.result.webcams);
 
-  let cam_data = await resp.json();
-
-  function sendData() {
-      var webcam_values = cam_data.result.webcams;
-      $.ajax({
-          url: '/process_traffic_cams',
-          type: 'POST',
-          contentType: 'application/json',
-          data: JSON.stringify({ 
-            'value': webcam_values 
-          }),
-          success: function(response) {
-              console.log(response.result);
-          },
-          error: function(error) {
-              console.log(error);
-          }
-      });
+    document.getElementById('cams_area').innerHTML
+    = response.result.webcams.map(v =>  
+      `<div class="card-deck" style="display: inline-block; flex-direction: row; gap: 1em; align-items: center; justify-content: center; margin-left: 50px">
+        <div class="cameraCard">
+          <img src=${v.image.current.preview} class="card-img-top" width="500px" alt="camera" style="border: 1px solid maroon; border-radius: 10px">
+          <div class="card-body" style="color: black">
+            <h5 class="card-title">${v.title}</h5>
+            <p class="card-text">
+              ${v.location.city}, ${v.location.region}, ${v.location.country}
+              <br>
+            </div>
+          </div>
+        </div>`
+      )
+  },
+  error: function(xhr) {
+    console.log("error", xhr)
   }
-  
-  sendData()
-
-  return cam_data.result.webcams;
-}
-
-const cameras = getLiveCams(event_latitude, event_longitude, 50, KEY).then(value => document.getElementById('cams_area').innerHTML = value.map(v =>  
-`<div class="card-deck" style="display: inline-block; flex-direction: row; gap: 1em; justify-content: center; height="${v.image.sizes.preview.height}"; width="${v.image.sizes.preview.width};">
-  <div class="cameraCard">
-    <img src=${v.image.current.preview} class="card-img-top" height="${v.image.sizes.preview.height}" width="${v.image.sizes.preview.width}" alt="camera">
-    <div class="card-body">
-      <h5 class="card-title">${v.title}</h5>
-      <p class="card-text">
-        ${v.location.city}, ${v.location.region}, ${v.location.country}
-        <br>
-      </div>
-    </div>
-  </div>`
-));
+});
 </script>
 {% endblock %}

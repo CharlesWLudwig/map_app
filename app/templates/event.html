@@ -99,9 +99,6 @@
                 <th onclick="sortTable(2)">
                     Event City:
                 </th>
-                <th onclick="sortTable(3)">
-                    Event State Alerts:
-                </th>
                 <th onclick="sortTable(4)">
                     Event Country:
                 </th>
@@ -122,7 +119,7 @@
                 </th>
                 <th onclick="sortTable(9)">
                     Event Duration:
-                </th>
+                </th> 
                 <th>
                     Update Your Event:
                 </th>
@@ -143,10 +140,6 @@
         
                   <td>
                       {{ event.event_city }}
-                  </td>
-                  <td>
-                    <button type="button" class="event_state" value="{{ event.event_state }}">{{ event.event_state }}</button>
-                  </div>
                   </td>
                   <td>
                       {{event.event_country}}
@@ -174,7 +167,7 @@
                   </td>
                   <td>
                       {{ event.event_duration }}
-                </td>
+                </td> 
                 <td>
                     <a href="/events/update/{{ event.id }}">
                       <button type="button" class="btn btn-danger btn-sm">Update</button></a>
@@ -193,17 +186,7 @@
 </div> 
 </div>
 <br>
-<script>
-    $(document).ready(function() {
-        $('table').SetEditable({
-        columnsEd: "0,1, 2, 3, 4, 5, 6, 7, 8, 9",
-        onEdit: function() {},
-        onDelete: function() {},
-        onBeforeDelete: function() {},
-        onAdd: function() {}
-    });
-});
-</script>
+
 <!--
 <div style="width:100%; height:500px">
     {% if map %}

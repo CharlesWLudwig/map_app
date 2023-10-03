@@ -3,12 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     
-    <script src="https://www.jqueryscript.net/demo/horizontal-panel-marquee/js/horizontal-panel.js"></script>
-    
-	<script src="../static/js/bootstable.js"></script>
-
     <link rel="stylesheet" href="{{ url_for('static', filename = 'css/style.css') }}" />
 
     {% if title %}
@@ -19,7 +15,7 @@
 </head>
 <body>
      <div class="content">
-        <div>
+        <div style="position: fixed; background-color: whitesmoke; width: 100%">
             {% if current_user.username %}
                 {{ current_user.username }} |
             <a href="{{ url_for('home') }}">Home</a>

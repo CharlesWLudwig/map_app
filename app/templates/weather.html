@@ -2,6 +2,13 @@
 
 {% block content %}
 <!-- Plotting the Optimal Route for Data Scientists in Python using the Dijkstra Algorithm -->
+
+<div style="text-align: center;">
+    <h2>Forecast near {{ event_name }}</h2>
+    <h3>Go to {{ event_name }}'s <a href="/events/cameras/{{ event_id }}">Traffic Cams</a></h3>
+    <h5>Go back to <a href="/events">All Events</a></h5>
+  </div>
+
 <div style="width: 100vw; display: block">
     <div style="float: left; left: 0; width: 50%;">
         {% if df %}
@@ -91,7 +98,7 @@
             {% endif %}
             <br>
             <div class="imgContainer">
-                <img style="opacity: 40%" src="{{value['icon']}}" alt="weather_pic" />
+                <img style="opacity: 40%" src="{{value['icon']}}" width="100%" height="80px" alt="weather_pic" />
                 <br>
                 {{ value['temperature'] }} {{ value['temperatureUnit'] }} - {{ value['temperatureTrend'] }}
                 <br>
@@ -131,7 +138,8 @@
         {% for key, value in night_dict.items() %}
         <div style="width: 10%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">       
             <div class="imgContainer">
-                <img style="opacity: 50%" src="{{value['icon']}}" alt="weather_pic" />
+                <img style="opacity: 40%" src="{{value['icon']}}" width="100%" height="80px" alt="weather_pic" />
+                <br>
                 {{ value['name'] }}
                 <br>
                 {{ value['temperature'] }} {{ value['temperatureUnit'] }} - {{ value['temperatureTrend'] }}

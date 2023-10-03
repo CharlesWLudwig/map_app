@@ -26,8 +26,6 @@ from app.models import Event, User
 def getLatLon(street, city, state, postalcode, country):
     url = f'https://geocode.maps.co/search?street={street}&city={city}&state={state}&postalcode={postalcode}&country={country}'
 
-    print(url)
-
     response = requests.get(url=url)
 
     if response.status_code == 200:
@@ -45,8 +43,8 @@ def getLatLon(street, city, state, postalcode, country):
         display_name = data_dict.get('display_name', 0)
         km = distance([float(latitude), float(longitude)])
         miles = distance([float(latitude), float(longitude)]).miles"""
-        print(latitude, longitude)
-        
+       # print(latitude, longitude)
+
         return latitude, longitude
 
 @app.route('/', methods=['GET', 'POST'])
@@ -54,13 +52,6 @@ def getLatLon(street, city, state, postalcode, country):
 def home():
     return render_template("home.html")
 
-@app.route('/process_traffic_cams', methods=['POST'])
-def process():
-    data = request.get_json()
-    result = data['value'] 
-    pprint(result[0])
-    return jsonify(result=result) 
-  
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -122,7 +113,7 @@ def register():
 def get_events():
     if current_user.is_authenticated:       
         form = EventForm()
-
+        
         """
         user_id = User.query.filter_by(username = current_user).first()
 
@@ -135,7 +126,7 @@ def get_events():
 
 #        events = User.query.filter_by(events=current_user.id).all()
 
-        print(events)
+#       print(events)
         
         if events is None:
             df = pd.DataFrame(
@@ -240,8 +231,7 @@ def get_events():
 @app.route("/events/create", methods=["POST"])
 @login_required
 def create():
-    if current_user.is_authenticated:
-        
+    if current_user.is_authenticated:       
         form = EventForm()
 
         user = User.query.filter_by(username=current_user.username).first_or_404()
@@ -284,25 +274,46 @@ def create():
         pass
 
     return redirect(url_for('get_events'))
-    
-@app.route("/events/update/<int:id>")
-@login_required
-def update(id):
-    if current_user.is_authenticated:
-            e = Event.query.filter_by(id=id).first()
 
-            print(e.id)
-            print(e.event_name)
-            print(e.event_street)
-            print(e.event_city)
-            print(e.event_state)
-            print(e.event_country)
-            print(e.event_type)
-            print(e.event_date)
-            print(e.event_postalcode)
-            print(e.event_latitude)
-            print(e.event_longitude)
-            print(e.event_duration)
+@app.route("/events/update", methods=['POST'])
+@login_required
+def update():
+    if current_user.is_authenticated:
+
+        form = EventForm()
+
+        user = User.query.filter_by(username=current_user.username).first_or_404()
+
+        events = user.events.all()
+
+        if form.validate_on_submit():
+            # get all events
+#            event = Event.query.filter_by(users_events = current_user.id).all()
+            event = Event.query.filter_by(event_name=form.event_name.data).first()
+
+            if event in events:   
+                function_latitude, function_longitude = getLatLon(
+                    street = form.event_street.data,
+                    city = form.event_city.data,
+                    state = form.event_state.data,
+                    country = form.event_country.data,
+                    postalcode = form.event_postalcode.data,
+                )
+
+                event = Event(
+                    event_name = form.event_name.data, 
+                    event_street = form.event_street.data,
+                    event_city = form.event_city.data,
+                    event_state = form.event_state.data,
+                    event_country = form.event_country.data,
+                    event_type = form.event_type.data,
+                    event_date = form.event_date.data.strftime('%Y-%m-%d'),
+                    event_postalcode = form.event_postalcode.data,
+                    event_latitude = function_latitude, 
+                    event_longitude = function_longitude, 
+                    event_duration = form.event_duration.data,   
+                    scheduler = current_user
+                )
 
             db.session.commit()
     else:
@@ -316,17 +327,19 @@ def cameras(id):
         event = Event.query.filter_by(id=id).first()      
         traffic_key = os.getenv('TRAFFIC_KEY')
 
+        event_id = event.id
+        event_name = event.event_name
         latitude = event.event_latitude
         longitude = event.event_longitude
 
-        return render_template("traffic.html", event_latitude = latitude, event_longitude = longitude, traffic_key = traffic_key)
+        return render_template("traffic.html", event_latitude = latitude, event_id = event_id, event_longitude = longitude, event_name = event_name, traffic_key = traffic_key)
 
-@app.route("/events/forecast/<int:id>")
+@app.route("/events/forecast/<int:id>", methods=['GET', 'POST'])
 @login_required
 def forecast(id):
     if current_user.is_authenticated:
         event = Event.query.filter_by(id=id).first()
-        
+
         """
         NOAA
         forecast - forecast for 12h periods over the next seven days
@@ -335,6 +348,8 @@ def forecast(id):
         """
         latitude = event.event_latitude
         longitude = event.event_longitude
+        event_name = event.event_name
+        event_id = event.id
 
         weather_url = f"https://api.weather.gov/points/{latitude},{longitude}"
 
@@ -363,12 +378,14 @@ def forecast(id):
         for i in daily_dict['periods']:
             forecast_dict[f"{i['name']}"] = i
 
+        """
         print("WEATHER DICT")
         print(weather_dict)
 
         print("FORECAST DICT")
         print(forecast_dict)
-   
+        """
+
         day_dict = {}
         night_dict = {}
         
@@ -435,10 +452,10 @@ def forecast(id):
                 station_url = {}
                 for i in stations_list:
                     station_url['station'] = i
-        """
+      
         for key, value in weather_dict.items():
             print(key, value)
-
+        """
             # print(i["observationStations"]["features"]i["properties"]["@id"][-4:])
 
         folium.GeoJson(
@@ -476,14 +493,14 @@ def forecast(id):
         # Getting the Forecasting Office 
         forecast_office_url = f"{weather_dict['forecastOffice']}"
 
-        print("\nFORECASTING OFFICE")
-        print(f"{weather_dict['forecastOffice']}")
+        # print("\nFORECASTING OFFICE")
+        # print(f"{weather_dict['forecastOffice']}")
 
         response = requests.get(forecast_office_url)
 
         if response.status_code == 200:
             forecastOfficeAddress = response.json()
-
+            """
             print(f"Forecast Office Address: {forecastOfficeAddress['address']}")
             
             print(f"Forecast Office Address: {forecastOfficeAddress['telephone']}")
@@ -493,7 +510,7 @@ def forecast(id):
             print(f"Approved Office Stations: {forecastOfficeAddress['approvedObservationStations']}")
 
             print(forecastOfficeAddress['approvedObservationStations'])
-
+            """
             response = requests.get(forecastOfficeAddress['parentOrganization'])
 
             if response.status_code == 200:
@@ -518,10 +535,10 @@ def forecast(id):
         """        
         nearby_state_alerts = getStateAlerts(state=weather_dict['relativeLocation']['properties']['state'])
 
-                print(nearby_state_alerts)
+        print(nearby_state_alerts)
         """
 
-        return render_template("weather.html", map = map, browser_latitude = latitude, browser_longitude =  longitude, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, user = current_user, office_dict = forecasting_office_dict, parent_office_dict = parent_office_dict)   
+        return render_template("weather.html", map = map, browser_latitude = latitude, browser_longitude =  longitude, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, user = current_user, office_dict = forecasting_office_dict, event_name = event_name, event_id = event_id, parent_office_dict = parent_office_dict)   
     else:
         pass
     return redirect(url_for("get_events"))
