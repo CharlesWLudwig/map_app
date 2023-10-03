@@ -187,20 +187,12 @@
 </div>
 <br>
 
-<!--
-<div style="width:100%; height:500px">
-    {% if map %}
-        {{ map._repr_html_() | safe }}
-    {% endif %}
-</div>   
--->
-
 <div class="column" style="right: 0">  
     {% if df %}    
         {{ df.to_html() | safe }}   
     {% endif %}
 </div>
-<!--</div>-->
+
 <script>
     function sortTable(n) {
       var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;

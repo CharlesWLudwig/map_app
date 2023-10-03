@@ -175,56 +175,10 @@ def get_events():
                 ]
             )
             
-        df_coords = []
-
-        map = folium.Map(location=[0, 0], tiles="OpenStreetMap", zoom_start=3)
-
-        # map = folium.Map(location=[df.iloc[0]['latitude'], df.iloc[0]['longitude']], tiles="OpenStreetMap", zoom_start=3)
-
-        for i in range(0,len(df)):
-        # https://api.weather.gov/alerts/active?area={state}
-
-            df_coords.append([df.iloc[i]['latitude'], df.iloc[i]['longitude']])
-
-            folium.Marker(
-            location=[df.iloc[i]['latitude'], df.iloc[i]['longitude']],
-            popup=df.iloc[i]['name'],
-            ).add_to(map)
-
-            """
-            ox.config(log_console=True, use_cache=True)
-
-            G_walk = ox.graph_from_place('', network_type='walk')
-
-            orig_node = ox.nearest_nodes(G_walk, df.iloc[i]['latitude'], df.iloc[i]['longitude'])
-            dest_node = ox.nearest_nodes(G_walk,  df.iloc[i+1]['latitude'], df.iloc[i+1]['longitude'])
-
-                    
-            my_dist = distance.geodesic(orig_node, dest_node)
-            
-            print(my_dist)
-            import networkx as nx
-            route = nx.shortest_path(G_walk,
-                                    orig_node,
-                                    dest_node,
-                                    weight='length')
-        
-            ox.plot_route_folium(G_walk, my_dist, popup_attribute='length')
-            """
-
         if not df.empty:
-            # random coordinates
-            coords = [[[42.3554025, -71.0728116], [42.3554142, -71.0728438]],
-    [[42.3554142, -71.0728438], [42.3554296, -71.0728738]]]
-            
-            fg = folium.FeatureGroup("Lines")
-            folium.PolyLine(coords).add_to(fg)
-            fg.add_to(map)
-            folium.LayerControl(position='bottomright').add_to(map)
-
-            return render_template("event.html", events=events, form = form, map=map, user = current_user)
+            return render_template("event.html", events=events, form = form, user = current_user)
         else:
-            return render_template("event.html", events=events, form = form, map = map, user = current_user)
+            return render_template("event.html", events=events, form = form, user = current_user)
     else:
         return redirect(url_for('login'))  
 
@@ -348,9 +302,14 @@ def forecast(id):
         """
         latitude = event.event_latitude
         longitude = event.event_longitude
-        event_name = event.event_name
         event_id = event.id
-
+        event_name = event.event_name
+        event_street = event.event_street
+        event_city = event.event_city
+        event_state = event.event_state
+        event_country = event.event_country
+        event_postalcode = event.event_postalcode
+        
         weather_url = f"https://api.weather.gov/points/{latitude},{longitude}"
 
         response = requests.get(weather_url)
@@ -486,7 +445,17 @@ def forecast(id):
         folium.Marker(
             [latitude, longitude], 
             name='My Location', 
-            popup="<i>My Location</i>"
+            popup=f"""
+                    <div style="width: 100px; text-align: center; font-weight: 600;">
+                    <i>
+                    <p>{event_name}</p>
+                    <p>{event_street}</p>
+                    <p>{event_city}</p>
+                    <p>{event_state}</p>
+                    <p>{event_country}</p>
+                    <p>{event_postalcode}</p>
+                   </i>
+                   </div>"""
         ).add_to(map)
 
     #       forecastOfficeAddress = weather_dict["forecastZone"]["properties"]["forecastOffices"][0]
