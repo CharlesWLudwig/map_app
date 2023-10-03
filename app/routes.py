@@ -296,6 +296,8 @@ def forecast(id):
         event_city = event.event_city
         event_state = event.event_state
         event_country = event.event_country
+        event_latitude = event.event_latitude
+        event_longitude = event.event_longitude
         event_postalcode = event.event_postalcode
         
         weather_url = f"https://api.weather.gov/points/{latitude},{longitude}"
@@ -495,7 +497,7 @@ def forecast(id):
         print(nearby_state_alerts)
         """
 
-        return render_template("weather.html", map = map, browser_latitude = latitude, browser_longitude =  longitude, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, user = current_user, office_dict = forecasting_office_dict, event_name = event_name, event_id = event_id, parent_office_dict = parent_office_dict)   
+        return render_template("weather.html", map = map, browser_latitude = latitude, browser_longitude =  longitude, forecast_dict = forecast_dict, day_dict = day_dict, night_dict = night_dict, user = current_user, office_dict = forecasting_office_dict, event_name = event_name, event_id = event_id, event_latitude = event_latitude, event_longitude = event_longitude,  parent_office_dict = parent_office_dict)   
     else:
         pass
     return redirect(url_for("get_events"))
@@ -510,3 +512,8 @@ def delete(id):
     else:
         pass
     return redirect(url_for("get_events"))
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files['file']
+    return 'file uploaded successfully'

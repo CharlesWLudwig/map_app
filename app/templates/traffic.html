@@ -13,12 +13,12 @@
 
 <script>
 const KEY = {{ traffic_key | tojson }};
-const DIST = 50;
+const DIST = 250;
 const event_latitude = {{ event_latitude }}
 const event_longitude = {{ event_longitude }}
 
 $.ajax({
-  url: `https://api.windy.com/api/webcams/v2/list/limit=50/nearby=${event_latitude},${event_longitude},${DIST}?key=${KEY}&show=webcams:location,image,url`,
+  url: `https://api.windy.com/api/webcams/v2/list/orderby=distance/limit=50/nearby=${event_latitude},${event_longitude},${DIST}?key=${KEY}&show=webcams:live,player,image,location`,
   type: "GET",
   success: function(response) {
     console.log("success", response.result.webcams);
@@ -27,8 +27,8 @@ $.ajax({
     = response.result.webcams.map(v =>  
       `<div class="card-deck" style="display: inline-block; flex-direction: row; gap: 1em; align-items: center; justify-content: center; margin-left: 50px">
         <div class="cameraCard">
-          <img src=${v.image.current.preview} class="card-img-top" width="500px" alt="camera" style="border: 1px solid maroon; border-radius: 10px">
-          <div class="card-body" style="color: black">
+          <iframe class="card-img-top" width="500px" height="400px" alt="camera" style="border: 1px solid maroon; border-radius: 10px" src="${v.player.day.embed}?autoplay=1"></iframe>
+          <div class="card-body" style="color: black"> 
             <h5 class="card-title">${v.title}</h5>
             <p class="card-text">
               ${v.location.city}, ${v.location.region}, ${v.location.country}
@@ -37,10 +37,19 @@ $.ajax({
           </div>
         </div>`
       )
+      
+      document.evaluate(
+      '//*[@*[starts-with(name(), "data-ref")]="play"]',
+      document,
+      null,
+      XPathResult.ANY_TYPE,
+      null
+    ).iterateNext().click()
   },
   error: function(xhr) {
     console.log("error", xhr)
   }
 });
 </script>
+
 {% endblock %}
