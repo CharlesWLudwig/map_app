@@ -92,7 +92,7 @@
 
     <div style="width: 100%; display: flex; flex: wrap; justify-content: space-evenly;">
         {% for key, value in day_dict.items() %}
-        <div style="width: 10%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">       
+        <div style="width: 10%; height: 200px; border: 1px solid black; background-color: whitesmoke; border-radius: 20px; text-align: center" id="todo">       
             {% if value['name'] is defined %}
                 {{ value['name'] }}
             {% endif %}
@@ -136,11 +136,13 @@
 
     <div style="width: 100%; display: flex; flex: wrap; justify-content: space-evenly;">
         {% for key, value in night_dict.items() %}
-        <div style="width: 10%; height: 200px; border: 1px solid black; background-color: whitesmoke;" id="todo">       
+        <div style="width: 10%; height: 200px; border: 1px solid black; background-color: whitesmoke; border-radius: 20px; text-align: center" id="todo">       
+            {% if value['name'] is defined %}
+                {{ value['name'] }}
+            {% endif %}
+            <br>
             <div class="imgContainer">
                 <img style="opacity: 40%" src="{{value['icon']}}" width="100%" height="80px" alt="weather_pic" />
-                <br>
-                {{ value['name'] }}
                 <br>
                 {{ value['temperature'] }} {{ value['temperatureUnit'] }} - {{ value['temperatureTrend'] }}
                 <br>
