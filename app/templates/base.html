@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <link rel="stylesheet" href="{{ url_for('static', filename = 'css/style.css') }}" />
 
     {% if title %}
@@ -26,7 +28,6 @@
                 <a href="{{ url_for('login') }}">Login</a>
                 <a href="{{ url_for('register') }}">Register</a>
             {% endif %}
-            <button onclick="DarkMode()">Toggle Dark Mode</button>
     </div>       
         
         {% with messages = get_flashed_messages() %}
@@ -42,12 +43,6 @@
         
         {% block content %}
         {% endblock %}
-        <script>
-            function DarkMode() {
-                let element = document.body;
-                element.classList.toggle("dark-mode");
-            }
-        </script>
         </div>
     </body>
 </html>

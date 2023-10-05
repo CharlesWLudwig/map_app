@@ -1,17 +1,19 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify
 import os
+import openrouteservice
+from openrouteservice import convert
 import pandas as pd
 from pprint import pprint
 from datetime import datetime
 from app import app, db
 from app.forms import EventForm, RegistrationForm, LoginForm
 import folium
+from folium import plugins
+from folium.elements import *
 import requests
 from flask_login import current_user, logout_user, login_user, login_required
 from app.models import User
 import json
-from folium import plugins
-from folium.elements import *
 from werkzeug.urls import url_parse
 
 @app.before_request
@@ -49,7 +51,9 @@ def getLatLon(street, city, state, postalcode, country):
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 def home():
-    return render_template("home.html")
+    traffic_key = os.getenv('TRAFFIC_KEY')
+
+    return render_template("home.html", traffic_key = traffic_key)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -512,6 +516,45 @@ def delete(id):
     else:
         pass
     return redirect(url_for("get_events"))
+
+@app.route('/events/directions', methods=['GET', 'POST'])
+def directions():
+    if current_user.is_authenticated:
+        client = openrouteservice.Client(key=os.getenv('token_api'))
+
+        coords = ((80.21787585263182,6.025423265401452),(80.23990263756545,6.018498276842677))
+
+        res = client.directions(coords)
+        geometry = client.directions(coords)['routes'][0]['geometry']
+        decoded = convert.decode_polyline(geometry)
+
+        distance_txt = "<h4> <b>Distance :&nbsp" + "<strong>"+str(round(res['routes'][0]['summary']['distance']/1000,1))+" Km </strong>" +"</h4></b>"
+
+        duration_txt = "<h4> <b>Duration :&nbsp" + "<strong>"+str(round(res['routes'][0]['summary']['duration']/60,1))+" Mins. </strong>" +"</h4></b>"
+
+        map = folium.Map(location=[6.074834613830474, 80.25749815575348],zoom_start=10, control_scale=True,tiles="cartodbpositron")
+
+        folium.GeoJson(decoded).add_child(folium.Popup(distance_txt+duration_txt,max_width=300)).add_to(map)
+
+        folium.Marker(
+            location=list(coords[0][::-1]),
+            popup="Galle fort",
+            icon=folium.Icon(color="green"),
+        ).add_to(map)
+
+        folium.Marker(
+            location=list(coords[1][::-1]),
+            popup="Jungle beach",
+            icon=folium.Icon(color="red"),
+        ).add_to(map)
+
+        plugins.Fullscreen(
+            position = "topright",
+            title = "Open full-screen map",
+            title_cancel = "Close full-screen map", force_separate_button = True,
+        ).add_to(map) 
+
+        return render_template("directions.html", map = map)
 
 @app.route('/upload', methods=['POST'])
 def upload():

@@ -17,3 +17,6 @@ email-validator
 asyncio
 geopy
 sklearn
+openrouteservice
+osmnx
+networkx
