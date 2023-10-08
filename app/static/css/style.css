@@ -37,6 +37,7 @@ body {
   float: left;
   width: 80%;
   padding: 10px;
+  align-items: center;
 }
 
 /* Clear floats after the columns */
@@ -48,8 +49,8 @@ body {
 
 table {
   border-spacing: 0;
-  width: 100%;
-  border: 1px solid black;
+  width: 99%;
+  border: 1px solid grey;
 }
 
 th {
@@ -85,7 +86,7 @@ tr:nth-child(even) {
   text-align: center;
   border-radius: 10px;
   padding: 0.5rem;
-  height: 150px;
+  height: 200px;
   width: 150px;
 }
 
@@ -200,4 +201,37 @@ img {
   display: none;
   padding: 100px 20px;
   height: 100%;
+}
+
+.open-button {
+  background-color: #555;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  opacity: 0.8;
+  position: fixed;
+  bottom: 23px;
+  right: 28px;
+  width: 280px;
+}
+
+.form-popup {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  right: 15px;
+  border: 3px solid #f1f1f1;
+  z-index: 9;
+}
+
+
+.form-container {
+  max-width: 300px;
+  padding: 10px;
+  background-color: white;
+}
+
+.form-container .btn:hover, .open-button:hover {
+  opacity: 1;
 }

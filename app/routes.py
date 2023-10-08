@@ -1,4 +1,7 @@
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask import render_template, flash, redirect, url_for, request, jsonify, make_response
+from icalendar import Calendar, Event as Event_Cal, vCalAddress, vText
+import pytz
+from pathlib import Path
 import os
 import openrouteservice
 from openrouteservice import convert
@@ -209,6 +212,7 @@ def create():
                     event_state = form.event_state.data,
                     event_country = form.event_country.data,
                     event_type = form.event_type.data,
+                    event_time = form.event_time.data.strftime('%I:%M %p'),
                     event_date = form.event_date.data.strftime('%Y-%m-%d'),
                     event_postalcode = form.event_postalcode.data,
                     event_latitude = function_latitude, 
@@ -246,6 +250,7 @@ def create():
                 event.event_state = form.event_state.data
                 event.event_country = form.event_country.data
                 event.event_type = form.event_type.data
+                event.event_time = form.event_time.data.strftime('%I:%M %p')
                 event.event_date = form.event_date.data.strftime('%Y-%m-%d')
                 event.event_postalcode = form.event_postalcode.data
                 event.event_latitude = function_latitude 
@@ -261,7 +266,7 @@ def create():
             pass
 
     if form.errors:
-        for error_field, error_message in form.errors.iteritems():
+        for error_field, error_message in form.errors.items():
             flash(f"Field : {error_field}; error : {error_message}")
 
     return redirect(url_for('get_events'))
@@ -487,12 +492,18 @@ def forecast(id):
             forecastOfficeAddress['address'], forecastOfficeAddress['telephone'], forecastOfficeAddress['email']
         ]
 
+        plugins.Fullscreen(
+            position = "topright",
+            title = "Open full-screen map",
+            title_cancel = "Close full-screen map", force_separate_button = True,
+        ).add_to(map) 
+
         folium.CircleMarker(location=([latitude, longitude]),radius=50, fill_color='red', #popup=f'https://forecast.weather.gov/data/obhistory/{[forecastOfficeAddress["approvedObservationStations"]]}.html'
         ).add_to(map)
 
         folium.LayerControl(collapsed=False).add_to(map)
         
-        minimap = plugins.MiniMap()
+        minimap = plugins.MiniMap(            position = "bottomleft")
         map.add_child(minimap)
 
         """        
@@ -517,46 +528,83 @@ def delete(id):
         pass
     return redirect(url_for("get_events"))
 
-@app.route('/events/directions', methods=['GET', 'POST'])
-def directions():
+@app.route("/events/calendar/<int:id>", methods=['GET'])
+@login_required
+def calendar(id):
     if current_user.is_authenticated:
-        client = openrouteservice.Client(key=os.getenv('token_api'))
+        event = Event.query.filter_by(id=id).first()
 
-        coords = ((80.21787585263182,6.025423265401452),(80.23990263756545,6.018498276842677))
+        # username details
+        user_name = current_user.username 
+        user_email = current_user.email
 
-        res = client.directions(coords)
-        geometry = client.directions(coords)['routes'][0]['geometry']
-        decoded = convert.decode_polyline(geometry)
+        # event details
+        event_id = event.id
+        event_name = event.event_name
+        event_street = event.event_street
+        event_city = event.event_city
+        event_state = event.event_state
+        event_country = event.event_country
+        event_type = event.event_type
+        event_postalcode = event.event_postalcode
+        event_duration = event.event_duration
+        event_date = event.event_date
+        event_time = event.event_time
 
-        distance_txt = "<h4> <b>Distance :&nbsp" + "<strong>"+str(round(res['routes'][0]['summary']['distance']/1000,1))+" Km </strong>" +"</h4></b>"
+        # calculating date conventions
+        event_year = int(event_date[:4])
+        event_month = int(event_date[5:7])
+        event_day = int(event_date[-2:])
 
-        duration_txt = "<h4> <b>Duration :&nbsp" + "<strong>"+str(round(res['routes'][0]['summary']['duration']/60,1))+" Mins. </strong>" +"</h4></b>"
+        event_cal_duration = float(event_duration)
+        event_cal_hours, event_cal_minutes = str(event_cal_duration).split(".") 
 
-        map = folium.Map(location=[6.074834613830474, 80.25749815575348],zoom_start=10, control_scale=True,tiles="cartodbpositron")
+        event_cal_hours = int(event_cal_hours)
+        event_cal_minutes = int(event_cal_minutes)
+#       print(event_cal_duration, event_cal_hours, event_cal_minutes)
 
-        folium.GeoJson(decoded).add_child(folium.Popup(distance_txt+duration_txt,max_width=300)).add_to(map)
+        event_hour = int(event_time[:2])
+        event_minute = int(event_time[3:5])
+        event_second = 0
+        # This is AM or PM (meridian designation)
+        event_time_meridian = event_time[-2:]
 
-        folium.Marker(
-            location=list(coords[0][::-1]),
-            popup="Galle fort",
-            icon=folium.Icon(color="green"),
-        ).add_to(map)
+        if event_cal_hours is not None:
+            ending_event_hour = event_hour + event_cal_hours
+        if event_cal_minutes is not None:
+            ending_event_minute = event_minute + event_cal_minutes
+            
+        cal = Calendar()
+        cal.add('prodid', '-//MapPy Travel Planner//mappy.com//')
+        cal.add('version', '2.0')
+        cal.add('attendee', f'MAILTO:{user_email}')
 
-        folium.Marker(
-            location=list(coords[1][::-1]),
-            popup="Jungle beach",
-            icon=folium.Icon(color="red"),
-        ).add_to(map)
+        event_cal = Event_Cal()
+        event_cal.add('name', f'{event_name}')
+        event_cal.add('description', f'{event_type}')
+        event_cal.add('dtstart', datetime(event_year, event_month, event_day, event_hour, event_minute, event_second, tzinfo=pytz.utc))
+        # print(f"datetime({event_year}, {event_month}, {event_day}, {event_hour}, {event_minute}, {event_second})")
+        event_cal.add('dtend', datetime(event_year, event_month, event_day, ending_event_hour, ending_event_minute, event_second, tzinfo=pytz.utc))
+        # print(f"datetime({event_year}, {event_month}, {event_day}, {ending_event_hour}, {ending_event_minute}, {event_second})")
+        event_cal.add('dtstamp', datetime(event_year, event_month, event_day, ending_event_hour, ending_event_minute, event_second, tzinfo=pytz.utc))
 
-        plugins.Fullscreen(
-            position = "topright",
-            title = "Open full-screen map",
-            title_cancel = "Close full-screen map", force_separate_button = True,
-        ).add_to(map) 
+        uid = datetime(event_year, event_month, event_day, ending_event_hour, ending_event_minute, event_second, tzinfo=pytz.utc)
+        uid = str(uid)[:-1]
 
-        return render_template("directions.html", map = map)
+        organizer = vCalAddress(f'MAILTO:{user_email}')
+        organizer.params['name'] = vText(f'{user_name}')
+        organizer.params['role'] = vText('Organizer')
+        event_cal['uid'] = f'{uid}/{event_id}@mappy.com'
+        event_cal['organizer'] = organizer
+        event_cal['location'] = vText(f'{event_street}, {event_city}, {event_state} {event_postalcode}, {event_country}')
 
-@app.route('/upload', methods=['POST'])
-def upload():
-    file = request.files['file']
-    return 'file uploaded successfully'
+        cal.add_component(event_cal)
+        
+        response = make_response(cal.to_ical())
+        response.headers["Content-Disposition"] = f"attachment; filename={event_name}.ics"
+    
+#       print(cal.to_ical().decode("utf-8")) 
+
+        return response
+    
+    return redirect(url_for('get_events'))

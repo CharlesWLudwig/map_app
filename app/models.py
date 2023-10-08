@@ -46,6 +46,7 @@ class Event(db.Model):
     event_type = db.Column(db.String(64), nullable = False)
     event_latitude = db.Column(db.String(64), nullable = True)
     event_longitude = db.Column(db.String(64), nullable = True)
+    event_time = db.Column(db.String(64), nullable = True)
     event_date = db.Column(db.String(64), nullable = True)
     event_duration = db.Column(db.String(64), nullable = False)
     

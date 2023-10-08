@@ -1,4 +1,4 @@
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, DateField, TextAreaField, DateTimeField 
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, DateField, TextAreaField, DateTimeField, TimeField
 from flask_wtf import FlaskForm
 from wtforms.validators import ValidationError, Email, EqualTo, InputRequired, Length, DataRequired
 from app.models import User
@@ -48,6 +48,8 @@ class EventForm(FlaskForm):
     event_postalcode = StringField('Event Postal Code', validators=[DataRequired()])   
 
     event_type = StringField('Event Type', validators=[DataRequired()])  
+
+    event_time = TimeField('Event Time')
 
     event_date = DateField('Event Date', format='%Y-%m-%d')
 

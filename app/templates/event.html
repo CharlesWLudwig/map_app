@@ -6,10 +6,10 @@
     <h1>{{ user.username }}'s Places</h1>
 
     <div class="row">
-        <div class="column1" style="background-color:#aaa;">
-          <h2>Road Trip Events</h2>
+        <div class="column1" style="background-color:#aaa">
+          <div class="eventsForm" style="padding-left: 20px">
+            <h2>Road Trip Events</h2>
           
-          <div class="eventsForm">
             <form action="{{ url_for('create') }}" method="POST" novalidate>
             {{ form.hidden_tag() }}
             {{ form.csrf_token }}
@@ -62,6 +62,13 @@
                 <span class="error">[{{ error }}]</span>
                 {% endfor %}
             </p>
+            <p>
+              {{ form.event_time.label }}<br>
+              {{ form.event_time() }}<br>
+              {% for error in form.event_time.errors %}
+              <span class="error">[{{ error }}]</span>
+              {% endfor %}
+           </p>
             <p>
                 {{ form.event_date.label }}<br>
                 {{ form.event_date() }}<br>
@@ -119,9 +126,12 @@
                     Event Forecast:
                 </th>
                 <th onclick="sortTable(7)">
-                    Event Date:
+                  Event Time:
                 </th>
                 <th onclick="sortTable(8)">
+                    Event Date:
+                </th>
+                <th onclick="sortTable(9)">
                     Event Duration:
                 </th> 
                 <th>
@@ -134,6 +144,9 @@
                   <tr>
                   <td>
                       {{event.event_name}}
+                  
+                      <a href="/events/calendar/{{ event.id }}">
+                        <button type="button" class="btn btn-danger btn-sm">ical file</button></a>
                   </td>
                   <td>
                       {{event.event_street}}
@@ -166,7 +179,10 @@
                     <button type="button" class="btn btn-danger btn-sm">Forecast</button></a>
                   </td>
                   <td>
-                    {{ event.event_date }}
+                    {{ event.event_time }}
+                  </td>
+                  <td>
+                      {{ event.event_date }}
                   </td>
                   <td>
                       {{ event.event_duration }}
@@ -193,7 +209,29 @@
 </div>
 
 <script>
-    function sortTable(n) {
+    $('#myTable').after('<div style="float: right; padding-right: 50px;" id="nav"></div>');
+    var rowsShown = 10;
+    var rowsTotal = $('#myTable tbody tr').length;
+    var numPages = rowsTotal/rowsShown;
+    for(i = 0; i < numPages; i++) {
+        var pageNum = i + 1;
+        $('#nav').append('<a href="javascript:void()" rel="'+i+'">'+pageNum+'</a> ');
+    }
+    $('#myTable tbody tr').hide();
+    $('#myTable tbody tr').slice(0, rowsShown).show();
+    $('#nav a:first').addClass('active');
+    $('#nav a').bind('click', function(){
+
+        $('#nav a').removeClass('active');
+        $(this).addClass('active');
+        var currPage = $(this).attr('rel');
+        var startItem = currPage * rowsShown;
+        var endItem = startItem + rowsShown;
+        $('#myTable tbody tr').css('opacity','0.0').hide().slice(startItem, endItem).
+        css('display','table-row').animate({opacity:1}, 300);
+    });
+
+    function sortTable(n) {      
       var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
       table = document.getElementById("myTable");
       switching = true;
@@ -232,28 +270,7 @@
           }
         }
       }
-    };
-    // Place the pagination numbers to be clicked
-    $('#myTable').after('<div style="float: right; padding-right: 10px;" id="nav"></div>');
-    var rowsShown = 10;
-    var rowsTotal = $('#myTable tbody tr').length;
-    var numPages = rowsTotal/rowsShown;
-    for(i = 0; i < numPages; i++) {
-        var pageNum = i + 1;
-        $('#nav').append('<a href="javascript:void()" rel="'+i+'">'+pageNum+'</a> ');
-    }
-    $('#myTable tbody tr').hide();
-    $('#myTable tbody tr').slice(0, rowsShown).show();
-    $('#nav a:first').addClass('active');
-    $('#nav a').bind('click', function(){
-
-        $('#nav a').removeClass('active');
-        $(this).addClass('active');
-        var currPage = $(this).attr('rel');
-        var startItem = currPage * rowsShown;
-        var endItem = startItem + rowsShown;
-        $('#myTable tbody tr').css('opacity','0.0').hide().slice(startItem, endItem).
-        css('display','table-row').animate({opacity:1}, 300);
-    });
+    }    
 </script>
+
 {% endblock %}

@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Plotting the Optimal Route for Data Scientists in Python using the Dijkstra Algorithm -->
 
 <div style="text-align: center;">
     <h2>Forecast near {{ event_name }}</h2>
@@ -43,7 +42,7 @@
                 {{ map._repr_html_() | safe }}
 
                 {% if parent_office_dict %}
-                <ul style="font-size: 16px; list-style-type: none; float:left; left: 0;">
+                <ul style="font-size: 12px; list-style-type: none; float:left; left: 0;">
                     {% for i in parent_office_dict %}
                 <li>{{ i['streetAddress'] }}</li>
                 <li>{{ i['addressLocality'] }}</li>
@@ -57,7 +56,7 @@
 
 
                 {% if office_dict %}
-                <ul style="font-size: 16px; list-style-type: none; float:right; right: 0;">
+                <ul style="font-size: 12px; list-style-type: none; float:right; right: 0;">
                     {% for i in office_dict %}
                 <li>{{ i['streetAddress'] }}</li>
                 <li>{{ i['addressLocality'] }}</li>
