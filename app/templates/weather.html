@@ -42,7 +42,7 @@
                 {{ map._repr_html_() | safe }}
 
                 {% if parent_office_dict %}
-                <ul style="font-size: 12px; list-style-type: none; float:left; left: 0;">
+                <ul style="font-size: 10px; list-style-type: none; float:left; left: 0;">
                     {% for i in parent_office_dict %}
                 <li>{{ i['streetAddress'] }}</li>
                 <li>{{ i['addressLocality'] }}</li>
@@ -56,7 +56,7 @@
 
 
                 {% if office_dict %}
-                <ul style="font-size: 12px; list-style-type: none; float:right; right: 0;">
+                <ul style="font-size: 10px; list-style-type: none; float:right; right: 0;">
                     {% for i in office_dict %}
                 <li>{{ i['streetAddress'] }}</li>
                 <li>{{ i['addressLocality'] }}</li>
@@ -84,9 +84,14 @@
     
     <ul style="list-style-type: none;">
     {% for key, value in day_dict.items() %}
+                {% if value['name'] %}
             <li><b>{{ value['name'] }}</b></li>
+                {% endif %}
             <ul style="list-style-type: none;">
-                <li>{{ value['detailedForecast'] }}</li>
+                {% if value['detailedForecast'] %}
+                <li>{{ value['detailedForecast'] }}
+                </li>
+                    {% endif %}
             </ul>
             <br>
     {% endfor %}
@@ -102,18 +107,25 @@
             <div class="imgContainer">
                 <img style="opacity: 40%" src="{{value['icon']}}" width="100%" height="80px" alt="weather_pic" />
                 <br>
-                {{ value['temperature'] }} {{ value['temperatureUnit'] }} - {{ value['temperatureTrend'] }}
-                <br>
-                {{ value['windSpeed'] }} {{ value['windDirection'] }}
-                <br>
-                {% if value['probabilityOfPrecipitation']['value'] is defined %}
-                    {{ value['probabilityOfPrecipitation']['value'] }} 
+                {% if value['temperature'] %}
+                {{ value['temperature'] }} {{ value['temperatureUnit'] }} 
                 {% endif %}
-                {% if value['probabilityOfPrecipitation'] is defined %}
+                {% if value['temperatureTrend'] %}
+                - {{ value['temperatureTrend'] }}
+                {% endif %}
+                <br>
+                {% if value['windSpeed'] %}
+                {{ value['windSpeed'] }} {{ value['windDirection'] }}
+                {% endif %}
+                <br>
+                {% if value['probabilityOfPrecipitation']['value'] %}
+                    {{ value['probabilityOfPrecipitation']['value'] }} 
                     {{ value['probabilityOfPrecipitation']['unitCode'][1] }}
                 {% endif %}
                 <br>
+                {% if value['relativeHumidity'] %}
                 {{ value['relativeHumidity']['value'] }} {{ value['relativeHumidity']['unitCode'][1] }} 
+                {% endif %}
             </div> 
             </div>
         {% endfor %}
@@ -144,20 +156,27 @@
             {% endif %}
             <br>
             <div class="imgContainer">
-                <img style="opacity: 40%" src="{{value['icon']}}" width="100%" height="80px" alt="weather_pic" />
+                <img style="opacity: 50%" src="{{value['icon']}}" width="100%" height="80px" alt="weather_pic" />
                 <br>
-                {{ value['temperature'] }} {{ value['temperatureUnit'] }} - {{ value['temperatureTrend'] }}
-                <br>
-                {{ value['windSpeed'] }} {{ value['windDirection'] }}
-                <br>
-                {% if value['probabilityOfPrecipitation']['value'] is defined %}
-                    {{ value['probabilityOfPrecipitation']['value'] }} 
+                {% if value['temperature'] %}
+                {{ value['temperature'] }} {{ value['temperatureUnit'] }} 
                 {% endif %}
-                {% if value['probabilityOfPrecipitation'] is defined %}
-                    {{ value['probabilityOfPrecipitation']['unitCode'][1] }}
-                {% endif %}                
+                {% if value['temperatureTrend'] %}
+                - {{ value['temperatureTrend'] }}
+                {% endif %}
                 <br>
+                {% if value['windSpeed'] %}
+                {{ value['windSpeed'] }} {{ value['windDirection'] }}
+                {% endif %}
+                <br>
+                {% if value['probabilityOfPrecipitation']['value'] %}
+                    {{ value['probabilityOfPrecipitation']['value'] }} 
+                    {{ value['probabilityOfPrecipitation']['unitCode'][1] }}
+                {% endif %}
+                <br>
+                {% if value['relativeHumidity'] %}
                 {{ value['relativeHumidity']['value'] }} {{ value['relativeHumidity']['unitCode'][1] }} 
+                {% endif %}
             </div> 
             </div>
         {% endfor %}
