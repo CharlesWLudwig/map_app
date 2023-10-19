@@ -336,14 +336,6 @@ def forecast(id):
         for i in daily_dict['periods']:
             forecast_dict[f"{i['name']}"] = i
 
-        """
-        print("WEATHER DICT")
-        print(weather_dict)
-
-        print("FORECAST DICT")
-        print(forecast_dict)
-        """
-
         day_dict = {}
         night_dict = {}
         
@@ -354,32 +346,7 @@ def forecast(id):
                 night_dict[key] = value
             else:
                 day_dict[key] = value
-        """"
-        for key in day_dict.keys():
-            print(key)
-
-        for key in night_dict.keys():
-            print(key)
-        """
-        """
-        print(f"GridX: {weather_dict['gridX']}")
-        print(f"GridY: {weather_dict['gridY']}")         
-        print(f"fireWeatherZone: {weather_dict['fireWeatherZone']}")
-        print(f"ForecastOffice: {weather_dict['forecastOffice']}")
-        print(f"County: {weather_dict['county']}")
-        print(f"Forecast: {weather_dict['forecast']}")
-        print(f"ForecastZone: {weather_dict['forecastZone']}")
-        print(f"Forecast Hourly: {weather_dict['forecastHourly']}")
-        print(f"Forecast Grid Data: {weather_dict['forecastGridData']}")
-        print(f"TimeZone: {weather_dict['timeZone']}")
-        print(f"City: {weather_dict['relativeLocation']['properties']['city']}")
-        print(f"State: {weather_dict['relativeLocation']['properties']['state']}")
-        print(f"Distance: {weather_dict['relativeLocation']['properties']['distance']}")
-        print(f"Bearing: {weather_dict['relativeLocation']['properties']['bearing']}")
-        print(f"Observation Station: {weather_dict['observationStations']}")
-        print(f"Radar Station: {weather_dict['radarStation']}")
-        """       
-
+       
         map = folium.Map(location=[latitude, longitude], zoom_start=6)
 
         folium.GeoJson(
@@ -391,30 +358,6 @@ def forecast(id):
             weather_dict['county'], 
             name='county'
         ).add_to(map)
-
-        """
-        weather_dict_2 = requests.get(f"{weather_dict['observationStations']}")
-        if weather_dict_2.status_code == 200: 
-            weather_dict_2 = weather_dict_2.json()
-
-        for key, value in weather_dict.items():
-            if key == 'observationStations':
-                print(value)
-        
-        stations_list = []
-
-        for key, value in weather_dict_2.items():
-            if key == 'observationStations':
-                stations_list.append(value)
-            
-                station_url = {}
-                for i in stations_list:
-                    station_url['station'] = i
-      
-        for key, value in weather_dict.items():
-            print(key, value)
-        """
-            # print(i["observationStations"]["features"]i["properties"]["@id"][-4:])
 
         folium.GeoJson(
             weather_dict['observationStations'],
@@ -457,28 +400,13 @@ def forecast(id):
                    </div>"""
         ).add_to(map)
 
-    #       forecastOfficeAddress = weather_dict["forecastZone"]["properties"]["forecastOffices"][0]
         # Getting the Forecasting Office 
         forecast_office_url = f"{weather_dict['forecastOffice']}"
-
-        # print("\nFORECASTING OFFICE")
-        # print(f"{weather_dict['forecastOffice']}")
-
         response = requests.get(forecast_office_url)
 
         if response.status_code == 200:
             forecastOfficeAddress = response.json()
-            """
-            print(f"Forecast Office Address: {forecastOfficeAddress['address']}")
-            
-            print(f"Forecast Office Address: {forecastOfficeAddress['telephone']}")
-            
-            print(f"Forecast Office Address: {forecastOfficeAddress['email']}")
-
-            print(f"Approved Office Stations: {forecastOfficeAddress['approvedObservationStations']}")
-
-            print(forecastOfficeAddress['approvedObservationStations'])
-            """
+           
             response = requests.get(forecastOfficeAddress['parentOrganization'])
 
             if response.status_code == 200:
@@ -503,7 +431,7 @@ def forecast(id):
 
         folium.LayerControl(collapsed=False).add_to(map)
         
-        minimap = plugins.MiniMap(            position = "bottomleft")
+        minimap = plugins.MiniMap(position = "bottomleft")
         map.add_child(minimap)
 
         """        
@@ -561,7 +489,6 @@ def calendar(id):
 
         event_cal_hours = int(event_cal_hours)
         event_cal_minutes = int(event_cal_minutes)
-#       print(event_cal_duration, event_cal_hours, event_cal_minutes)
 
         event_hour = int(event_time[:2])
         event_minute = int(event_time[3:5])
@@ -602,8 +529,6 @@ def calendar(id):
         
         response = make_response(cal.to_ical())
         response.headers["Content-Disposition"] = f"attachment; filename={event_name}.ics"
-    
-#       print(cal.to_ical().decode("utf-8")) 
 
         return response
     
