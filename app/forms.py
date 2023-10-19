@@ -29,8 +29,6 @@ class RegistrationForm(FlaskForm):
             raise ValidationError('Please use a different email address.')
         
 class EventForm(FlaskForm):
-#     id = StringField('Event ID', validators=[DataRequired()])
-
     event_name = StringField('Event Name', validators=[DataRequired()])
 
     event_street = StringField('Event Street', validators=[DataRequired()])
