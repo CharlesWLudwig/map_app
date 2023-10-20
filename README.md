@@ -2,7 +2,7 @@
 
 Description:
 
-This Map Application allows you to book save events. For each event you can see the separate traffic and weather conditions. 
+This Map Application allows you to book and save events centered around building locations. For each event you can see the separate traffic and weather conditions. 
 
 To run this application, type in:
 > python3 runserver.py
